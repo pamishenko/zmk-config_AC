@@ -14,7 +14,7 @@
 #define LWR 2
 #define RSE 3
 #define ADJ 4
-#define GUI 5
+
 
 &lt { quick_tap_ms = <200>; };
 &mt { quick_tap_ms = <200>; };
