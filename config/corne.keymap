@@ -14,6 +14,7 @@
 #define LWR 2
 #define RSE 3
 #define ADJ 4
+#define GUI 5
 
 &lt { quick_tap_ms = <200>; };
 &mt { quick_tap_ms = <200>; };
@@ -159,5 +160,26 @@
                              &trans        &trans        &trans                            &trans        &trans        &trans
                         >;
                 };
+
+    alt_lwr_layer {
+// .----------------------------------------------------------.        .-----------------------------------------------------.
+// |           |    ~   |   !    |    @   |    #    |    |     |       |    +   |   =    |         |    (   |   )    |       |
+// |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
+// |           |    `   |   $    |    %   |    ^    |    \     |       |    -   |        |         |    {   |   }    |       |
+// |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
+// |           |        |   ^    |    &   |    *    |    /     |       |    _   |   >    |     <   |    [   |   ]    |       |
+// '-----------------------------+--------+---------+----------+       |--------+--------+---------+-------------------------'
+//                               |        |         |          |       |        |        |         |
+//                               '--------+---------+----------'       '--------+--------+---------'
+
+        bindings = <
+            &kp NOP     &kp TILDE    &kp EXCLAIM     &kp AT         &kp HASH    &kp PIPE            &kp KP_PLUS     &kp EQUAL   &kp NOP &kp LPAR    &kp RPAR    &kp NOP
+            &kp NOP     &kp GRAVE    &kp DOLLAR      &kp PERCENT    &kp CARET   &kp BSLH            &kp MINUS       &kp NOP     &kp NOP &kp LCBR    &kp RCBR    &kp NOP
+            &kp NOP     &kp NOP      &kp CARET       &kp AMPS       &kp STAR    &kp FSLH            &kp UNDERSCORE  &kp GT      &kp LT  &kp LBRKT   &kp RBRKT   &kp NOP
+                                                     &trans         &trans      &trans              &trans          &trans      &trans
+        >;
+    };
+
+
          };
 };
