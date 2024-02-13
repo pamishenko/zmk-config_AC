@@ -104,39 +104,39 @@
    
   
                 lower_layer {
-// .----------------------------------------------------------.       .-----------------------------------------------------.
-// |    TAB    |   1    |   2    |   3    |    4    |    5     |       |    ^   |    &   |    *    |    (   |    )   |  DEL  |
+// .----------------------------------------------------------.        .-----------------------------------------------------.
+// |    TAB    |   !    |   @    |   #    |    $    |    %     |       |    ^   |    &   |    *    |    (   |    )   |  DEL  |
 // |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
-// |    SHFT   |   F4   |  LEFT  |   UP   |  RIGHT  |   HOME   |       | vol up |  mute  |  vol dn |        |        |   ~   |
+// |    SHFT   |   F4   |  LEFT  |   UP   |  RIGHT  |   HOME   |       |    :   |    ?   |         |        |    |   |   ~   |
 // |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
-// |    CTRL   | CTRL+N |   PU   |  DOWN  |    PD   |   END    |       |  prev  |  play  |   next  |        |        |   \   |
+// |    CTRL   | CTRL+N |   PU   |  DOWN  |    PD   |   END    |       |        |        |    ,    |    .   |    \   |   _   |
 // '-----------------------------+--------+---------+----------+       |--------+--------+---------+-------------------------'
-//                               |  ALT   |         |ADJ_ENTER |       |        |        |         |
+//                               |  ALT   |         |ADJ_ENTER |       |   RET  |        |         |
 //                               '--------+---------+----------'       '--------+--------+---------'
 
                         bindings = <
-   &kp TAB     &kp N1    &kp N2     &kp N3    &kp N4     &kp N5          &kp CARET     &kp AMPS   &kp STAR     &kp LPAR   &kp RPAR  &kp DEL
-   &kp LSHFT   &kp F4    &kp LEFT   &kp UP    &kp RIGHT  &kp HOME        &kp C_VOL_DN  &kp C_MUTE &kp C_VOL_UP &trans     &trans    &kp GRAVE
-   &kp LCTRL   &kp LC(N) &kp PG_UP  &kp DOWN  &kp PG_DN  &kp END         &kp C_PREV    &kp C_PP   &kp C_NEXT   &trans     &trans    &kp BSLH
-                          &kp LALT   &trans    &lt ADJ ENTER              &trans   &trans   &trans
+   &kp TAB     &kp EXCLAMATION    &kp AT     &kp HASH    &kp DOLLAR  &kp PERCENT       &kp CARET   &kp AMPS     &kp STAR     &kp LPAR    &kp RPAR       &kp DEL
+   &kp LSHFT   &kp F4    &kp LEFT   &kp UP    &kp RIGHT  &kp HOME                      &kp COLON   &kp QUESTION &trans       &trans      &kp PIPE2      &kp GRAVE
+   &kp LCTRL   &kp LC(N) &kp PG_UP  &kp DOWN  &kp PG_DN  &kp END                       &trans      &trans       &kp COMMA    &kp PERIOD  &kp UNDERSCORE &kp BSLH
+                          &kp LALT   &trans    &lt ADJ ENTER                           &kp ENTER   &trans       &trans
                         >;
                 };
   
   
                   raise_layer {
 // .------------------------------------------------------.       .-----------------------------------------------------.
-// |   F2    |    *   |    1   |    2   |    3   |    -   |       |        |   F1   |   F2   |   F3   |   F4   |   DEL  |
+// |   F2    |    *   |    1   |    2   |    3   |    -   |       | vol up |   F1   |   F2   |   F3   |   F4   |   DEL  |
 // |---------+--------+--------+--------+--------+--------|       |--------+--------+--------+--------+--------+--------|
-// |   SHFT  |    /   |    4   |    5   |    6   |    +   |       |        |   F5   |   F6   |   F7   |   F8   |    ~   |
+// |   SHFT  |    /   |    4   |    5   |    6   |    +   |       | vol dn |   F5   |   F6   |   F7   |   F8   |    ~   |
 // |---------+--------+--------+--------+--------+--------|       |--------+--------+--------+--------+--------+--------|
-// |   CTRL  |    =   |    7   |    8   |    9   |    .   |       |        |   F9   |   F10  |   F11  |   F12  |    \   |
+// |   CTRL  |    =   |    7   |    8   |    9   |    .   |       |  next  |   F9   |   F10  |   F11  |   F12  |    \   |
 // '---------------------------+--------+--------+--------+       |-------+---------+--------+--------------------------'
 //                             |    0   |   ADJ  |        |       |        |        |        |
 //                             '--------+--------+--------'       '--------+--------+--------'
                         bindings = <
-   &kp F2     &kp KP_ASTERISK &kp N1 &kp N2 &kp N3 &kp MINUS           &trans &kp F1  &kp F2  &kp F3  &kp F4  &kp DEL
-   &kp LSHFT  &kp KP_SLASH    &kp N4 &kp N5 &kp N6 &kp KP_PLUS         &trans &kp F5  &kp F6  &kp F7  &kp F8  &kp GRAVE
-   &kp LCTRL  &kp EQUAL       &kp N7 &kp N8 &kp N9 &kp KP_DOT          &trans &kp F9  &kp F10 &kp F11 &kp F12 &kp BSLH
+   &kp F2     &kp KP_ASTERISK &kp N1 &kp N2 &kp N3 &kp MINUS           &kp C_VOL_UP &kp F1  &kp F2  &kp F3  &kp F4  &kp DEL
+   &kp LSHFT  &kp KP_SLASH    &kp N4 &kp N5 &kp N6 &kp KP_PLUS         &kp C_VOL_DN &kp F5  &kp F6  &kp F7  &kp F8  &kp GRAVE
+   &kp LCTRL  &kp EQUAL       &kp N7 &kp N8 &kp N9 &kp KP_DOT          &kp C_NEXT &kp F9  &kp F10 &kp F11 &kp F12 &kp BSLH
                               &kp N0        &mo ADJ   &trans           &trans &trans  &trans
                         >;
                 };
