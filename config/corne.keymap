@@ -173,9 +173,9 @@
 //                               '--------+---------+----------'       '--------+--------+---------'
 
         bindings = <
-            &kp NOP     &kp TILDE    &kp EXCLAIM     &kp AT         &kp HASH    &kp PIPE            &kp KP_PLUS     &kp EQUAL   &kp NOP &kp LPAR    &kp RPAR    &kp NOP
-            &kp NOP     &kp GRAVE    &kp DOLLAR      &kp PERCENT    &kp CARET   &kp BSLH            &kp MINUS       &kp NOP     &kp NOP &kp LCBR    &kp RCBR    &kp NOP
-            &kp NOP     &kp NOP      &kp CARET       &kp AMPS       &kp STAR    &kp FSLH            &kp UNDERSCORE  &kp GT      &kp LT  &kp LBRKT   &kp RBRKT   &kp NOP
+            &trans     &kp TILDE    &kp EXCLAIM     &kp AT         &kp HASH    &kp PIPE            &kp KP_PLUS     &kp EQUAL   &trans  &kp LPAR    &kp RPAR    &trans
+            &trans     &kp GRAVE    &kp DOLLAR      &kp PERCENT    &kp CARET   &kp BSLH            &kp MINUS       &trans      &trans  &kp LCBR    &kp RCBR    &trans
+            &trans     &trans       &kp CARET       &kp AMPS       &kp STAR    &kp FSLH            &kp UNDERSCORE  &kp GT      &kp LT  &kp LBRKT   &kp RBRKT   &trans
                                                      &trans         &trans      &trans              &trans          &trans      &trans
         >;
     };
