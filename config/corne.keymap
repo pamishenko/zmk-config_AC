@@ -106,18 +106,18 @@
 // .----------------------------------------------------------.        .-----------------------------------------------------.
 // |    TAB    |   !    |   @    |   #    |    $    |    %     |       |    ^   |    &   |    *    |    (   |    )   |  DEL  |
 // |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
-// |   SHFT    |    |   |    *   |   +    |         |     =    |       |  left  |  down  |    up   |  right |   pu   |  pd   |
+// |   SHFT    |    ~   |    *   |   +    |         |     =    |       |  left  |  down  |    up   |  right |   pu   |  pd   |
 // |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
-// |   CTRL    |        |    /   |   -    |         |     ~    |       |  home  |  end   |    ,    |    .   |    ?   |   \   |
+// |   CTRL    |    |   |    /   |   -    |         |  insert  |       |  home  |  end   |    ,    |    .   |    ?   |   \   |
 // '-----------------------------+--------+---------+----------+       |--------+--------+---------+-------------------------'
-//                               |  ALT   |         |ADJ_ENTER |       |   RET  |        |         |
+//                               |  ALT   |         |ADJ_ENTER |       |   RET  |  CTRL  |  SHIFT  |
 //                               '--------+---------+----------'       '--------+--------+---------'
 
                         bindings = <
    &kp TAB     &kp EXCLAMATION   &kp AT            &kp HASH     &kp DOLLAR  &kp PERCENT        &kp CARET   &kp AMPS     &kp STAR     &kp LPAR    &kp RPAR       &kp DEL
-   &kp LSHFT   &kp PIPE          &kp KP_MULTIPLY   &kp KP_PLUS  &trans      &kp KP_EQUAL       &kp LEFT    &kp DOWN     &kp UP       &kp RIGHT   &kp PG_UP      &kp PG_DN
-   &kp LCTRL   &trans            &kp KP_DIVIDE     &kp KP_MINUS &trans      &kp TILDE          &kp HOME    &kp END      &kp COMMA    &kp PERIOD  &kp QUESTION   &kp BSLH
-                                                   &kp LALT     &trans      &lt ADJ ENTER      &kp ENTER   &trans       &trans
+   &kp LSHFT   &kp GRAVE         &kp KP_MULTIPLY   &kp KP_PLUS  &trans      &kp KP_EQUAL       &kp LEFT    &kp DOWN     &kp UP       &kp RIGHT   &kp PG_UP      &kp PG_DN
+   &kp LCTRL   &kp PIPE          &kp KP_DIVIDE     &kp MINUS    &trans      &kp INSERT         &kp HOME    &kp END      &kp COMMA    &kp PERIOD  &kp QUESTION   &kp BSLH
+                                                   &kp LALT     &trans      &lt ADJ ENTER      &kp ENTER   &kp RCTRL    &kp RSHIFT
                         >;
                 };
 
