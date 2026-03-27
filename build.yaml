@@ -14,19 +14,19 @@
 ---
 
 include:
-  - board: nrfmicro_13
+  - board: nrfmicro_13/zmk
     shield: corne_left
-  - board: nrfmicro_13
+  - board: nrfmicro_13/zmk
     shield: corne_right
-  - board: nice_nano_v2
+  - board: nice_nano_v2/zmk
     shield: corne_left
-  - board: nice_nano_v2
+  - board: nice_nano_v2/zmk
     shield: corne_right
-  - board: nice_nano
+  - board: nice_nano/zmk
     shield: reviung41
-  - board: nice_nano_v2
+  - board: nice_nano_v2/zmk
     shield: reviung41
-  - board: nice_nano_v2
+  - board: nice_nano_v2/zmk
     shield: settings_reset
 
 
