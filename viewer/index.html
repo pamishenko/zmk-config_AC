@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corne Keymap Viewer</title>
+<style>
+:root {
+  --bg: #f4f4f1;
+  --surface: #ffffff;
+  --surface-2: #ecebe6;
+  --text: #1d1d1b;
+  --muted: #6d6c66;
+  --border: #d9d7d0;
+  --key: #ffffff;
+  --key-border: #cfcdc5;
+  --key-shadow: 0 2px 0 #cfcdc5;
+  --held: #2f6fe4;
+  --held-text: #ffffff;
+  --combo: #d98a00;
+  --combo-bg: #fff3d6;
+  --layer: #7c4ddb;
+  --layer-bg: #efe8fd;
+  --mod: #1f8a5b;
+  --phys: #0f9fb3;
+  --l0: #8a8880; --l1: #149c8c; --l2: #2f6fe4; --l3: #e0602a; --l4: #c03a8a; --l5: #6b8e23;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17171a; --surface: #202024; --surface-2: #2a2a2f; --text: #ecebe6; --muted: #9a9890;
+    --border: #34343a; --key: #2a2a30; --key-border: #3c3c44; --key-shadow: 0 2px 0 #111114;
+    --held: #4d8bff; --combo: #f0a830; --combo-bg: #3a2d10; --layer: #a07cf0; --layer-bg: #2c2340;
+    --mod: #3fbf86; --phys: #2ec4d8;
+    --l0: #9a9890; --l1: #2ec4b0; --l2: #4d8bff; --l3: #ff7d45; --l4: #e05aa8; --l5: #9cc24a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17171a; --surface: #202024; --surface-2: #2a2a2f; --text: #ecebe6; --muted: #9a9890;
+  --border: #34343a; --key: #2a2a30; --key-border: #3c3c44; --key-shadow: 0 2px 0 #111114;
+  --held: #4d8bff; --combo: #f0a830; --combo-bg: #3a2d10; --layer: #a07cf0; --layer-bg: #2c2340;
+  --mod: #3fbf86; --phys: #2ec4d8;
+  --l0: #9a9890; --l1: #2ec4b0; --l2: #4d8bff; --l3: #ff7d45; --l4: #e05aa8; --l5: #9cc24a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 16px; }
+h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+.src { color: var(--muted); font-size: 13px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+button {
+  font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; cursor: pointer;
+}
+button:hover { border-color: var(--muted); }
+.tab { display: inline-flex; align-items: center; gap: 6px; }
+.tab .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lc); opacity: .35; }
+.tab.on .dot { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc) 25%, transparent); }
+.tab.top { border-color: var(--lc); background: color-mix(in srgb, var(--lc) 12%, var(--surface)); font-weight: 600; }
+.spacer { flex: 1; }
+
+.board { container-type: inline-size; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px 14px; outline: none; }
+.board:focus-visible { border-color: var(--phys); }
+.kbd { --u: calc(100cqw / 14.6); position: relative; height: calc(var(--u) * 4.95); margin: 0 auto; width: 100%; }
+.key {
+  position: absolute; width: calc(var(--u) * .92); height: calc(var(--u) * .92);
+  border-radius: calc(var(--u) * .14); background: var(--key); border: 1px solid var(--key-border);
+  box-shadow: var(--key-shadow); cursor: pointer; user-select: none; -webkit-user-select: none;
+  display: grid; grid-template-rows: 1fr auto 1fr; justify-items: center; align-items: center;
+  padding: calc(var(--u) * .04); overflow: hidden;
+  transition: background .08s, transform .08s, box-shadow .12s, border-color .12s;
+}
+.key::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--kc, transparent); opacity: .8; }
+.key .mh { grid-row: 1; align-self: start; font-size: calc(var(--u) * .14); color: var(--mod); font-weight: 600; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+.key .main { grid-row: 2; font-size: calc(var(--u) * .3); font-weight: 600; line-height: 1; white-space: nowrap; }
+.key .main.long { font-size: calc(var(--u) * .2); }
+.key .main.xlong { font-size: calc(var(--u) * .16); }
+.key .hold { grid-row: 3; align-self: end; font-size: calc(var(--u) * .15); color: var(--muted); white-space: nowrap; line-height: 1.1; }
+.key .hold.lay { color: var(--hc); font-weight: 600; }
+.key .sub { font-size: .55em; color: var(--muted); font-weight: 500; margin-left: 1px; }
+.key.fall .main { opacity: .45; }
+.key.none .main { opacity: .2; }
+.key .badge {
+  position: absolute; right: 2px; top: 2px; font-size: calc(var(--u) * .13); font-weight: 700;
+  background: var(--combo); color: #fff; border-radius: 4px; padding: 0 3px; line-height: 1.35; display: none; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.key.hint-combo { border: 2px dashed var(--combo); background: var(--combo-bg); }
+.key.hint-combo .badge { display: block; }
+.key.hint-layer { border: 2px solid var(--hc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hc) 25%, transparent); }
+.key.held, .key.phys { background: var(--held); border-color: var(--held); color: var(--held-text); transform: translateY(1px); box-shadow: 0 0 0 3px color-mix(in srgb, var(--held) 30%, transparent); }
+.key.phys { background: var(--phys); border-color: var(--phys); }
+.key.phys.amb { background: color-mix(in srgb, var(--phys) 35%, var(--key)); color: var(--text); border-style: dashed; }
+.key.inferred { border: 2px solid var(--phys); background: color-mix(in srgb, var(--phys) 55%, var(--key)); transform: translateY(1px); box-shadow: 0 0 0 3px color-mix(in srgb, var(--phys) 30%, transparent); }
+.key.held .hold, .key.phys .hold, .key.held .mh, .key.phys .mh { color: inherit; opacity: .85; }
+.key.combo-fired { background: var(--combo); border-color: var(--combo); color: #fff; }
+
+.pill {
+  position: absolute; transform: translate(-50%, -50%); z-index: 3; pointer-events: none;
+  font-size: calc(var(--u) * .13); font-weight: 700; line-height: 1.3; white-space: nowrap;
+  padding: 0 4px; border-radius: 99px; background: var(--surface); color: var(--combo);
+  border: 1px solid var(--combo); opacity: .8;
+}
+.pill.hint { background: var(--combo); color: #fff; opacity: 1; animation: pulse 1s ease-in-out infinite; }
+.pill.fired { background: var(--combo); color: #fff; opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+@keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--combo) 35%, transparent); } }
+.kbd.nopills .pill:not(.hint):not(.fired) { display: none; }
+
+.status { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; min-height: 34px; margin-top: 12px; font-size: 14px; }
+.status .lbl { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); font-weight: 600; }
+.chip.mod { color: var(--mod); }
+.chip.combo { background: var(--combo); color: #fff; }
+.chip.layer { background: var(--hc); color: #fff; }
+.chip.phys { background: var(--phys); color: #fff; }
+.result { font-weight: 700; }
+.result .means { color: var(--mod); font-weight: 600; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.card h2 { font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.next { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.next li { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.next .k { font-weight: 700; min-width: 56px; }
+.empty { color: var(--muted); font-size: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+td, th { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 500; font-size: 12px; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--surface-2); }
+.legend { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.legend span.sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; }
+.help { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+.warn { color: var(--combo); }
+kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+.drop { outline: 2px dashed var(--phys); outline-offset: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Corne — раскладка и комбо</h1>
+    <span class="src" id="src">загрузка…</span>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <div class="spacer"></div>
+    <label class="src"><input type="checkbox" id="showPills" checked> комбо на схеме</label>
+    <button id="clear">Отпустить всё</button>
+    <button id="load">Открыть .keymap…</button>
+    <input type="file" id="file" accept=".keymap,.dtsi,.txt" hidden>
+  </div>
+
+  <div class="board" id="board" tabindex="0">
+    <div class="kbd" id="kbd"></div>
+    <div class="status" id="status"></div>
+  </div>
+  <p class="help">
+    <b>Мышь:</b> клик зажимает клавишу, повторный клик отпускает — так можно собрать комбо или удерживать слой/модификатор.
+    <b>Клавиатура:</b> просто нажимайте на самой Corne — страница по коду клавиши найдёт позицию и слой.
+    Клавиши слоёв при удержании шлют F19 (LWR, ADJ на RSE-слое) и F20 (RSE, ADJ на LWR-слое) — так страница видит их сразу. Без этой прошивки слой угадывается по следующей клавише.
+    <span class="warn">⌘W, ⌘Q, ⌘T браузер перехватить не даст.</span>
+  </p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Что будет, если нажать ещё</h2>
+      <ul class="next" id="next"></ul>
+    </section>
+    <section class="card">
+      <h2>Комбо</h2>
+      <table id="combos"></table>
+      <h2 style="margin-top:16px">Обозначения</h2>
+      <div class="legend">
+        <div><span class="sw" style="background:var(--held)"></span>зажато мышью</div>
+        <div><span class="sw" style="background:var(--phys)"></span>нажато на клавиатуре (пунктир — один из вариантов)</div>
+        <div><span class="sw" style="background:var(--combo-bg);border:2px dashed var(--combo)"></span>дожми — сработает комбо</div>
+        <div><span class="sw" style="border:2px solid var(--layer)"></span>ведёт на другой слой</div>
+        <div><span class="sw" style="background:var(--mod)"></span>зелёным сверху — результат с зажатым модификатором</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script type="text/plain" id="embedded-keymap">
+/*
+ * Copyright (c) 2020 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/rgb.h>
+
+#define DEF 0
+#define GAME 1
+#define LWR 2
+#define RSE 3
+#define ADJ 4
+
+&lt { quick_tap_ms = <200>; };
+&mt { quick_tap_ms = <200>; };
+
+/ {
+    behaviors {
+        hm: homerow_mods {
+            compatible = "zmk,behavior-hold-tap";
+            label = "HOMEROW_MODS";
+            #binding-cells = <2>;
+            tapping-term-ms = <200>;
+            quick_tap_ms = <0>;
+            flavor = "tap-preferred";
+            bindings = <&kp>, <&kp>;
+        };
+
+        // Momentary layer that also holds F19 / F20 while the key is down,
+        // so the web viewer (viewer/index.html) can see which thumb layer key is held.
+        mo_f19: mo_f19 {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
+            wait-ms = <0>;
+            tap-ms = <0>;
+            bindings
+                = <&macro_param_1to1>
+                , <&macro_press &mo MACRO_PLACEHOLDER>
+                , <&macro_press &kp F19>
+                , <&macro_pause_for_release>
+                , <&macro_release &kp F19>
+                , <&macro_param_1to1>
+                , <&macro_release &mo MACRO_PLACEHOLDER>
+                ;
+        };
+        mo_f20: mo_f20 {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
+            wait-ms = <0>;
+            tap-ms = <0>;
+            bindings
+                = <&macro_param_1to1>
+                , <&macro_press &mo MACRO_PLACEHOLDER>
+                , <&macro_press &kp F20>
+                , <&macro_pause_for_release>
+                , <&macro_release &kp F20>
+                , <&macro_param_1to1>
+                , <&macro_release &mo MACRO_PLACEHOLDER>
+                ;
+        };
+
+        // Same as &lt (tap-preferred, 200 ms), but the hold side is &mo_f20
+        lt_f20: layer_tap_f20 {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            tapping-term-ms = <200>;
+            flavor = "tap-preferred";
+            bindings = <&mo_f20>, <&kp>;
+        };
+    };
+};
+
+/ {
+    combos {
+        compatible = "zmk,combos";
+        combo_F2 {
+            timeout-ms = <50>;
+            key-positions = <0 1>;
+            bindings = <&kp F2>;
+        };
+        combo_ENTER {
+            timeout-ms = <50>;
+            key-positions = <3 4>;
+            bindings = <&kp ENTER>;
+        };
+         combo_BS {
+            timeout-ms = <50>;
+            key-positions = <4 5>;
+            bindings = <&kp BSPC>;
+        };
+        combo_Del {
+            timeout-ms = <50>;
+            key-positions = <28 29>;
+            bindings = <&kp DEL>;
+        };
+    };
+};
+
+
+/ {
+        keymap {
+                compatible = "zmk,keymap";
+
+                default_layer {
+// .-------------------------------------------------------.       .-----------------------------------------------------------.
+// |  ESC  |    Q    |    W   |   E    |    R    |    T    |       |   Y   |    U    |    I    |    O    |     P    |     [    |
+// |-------+---------+--------+--------+---------+---------|       |-------+---------+---------+---------+----------+----------|
+// |  SHFT |    A    |    S   |   D    |    F    |    G    |       |   H   |    J    |    K    |    L    |     ;    |     '    |
+// |-------+---------+--------+--------+---------+---------|       |-------+---------+---------+---------+----------+----------|
+// |  CTRL |    Z    |    X   |   C    |    V    |    B    |       |   N   |    M    |    ,    |    .    |     /    |     ]    |
+// '--------------------------+--------+---------+---------+       |-------+---------+---------+-------------------------------'
+//                            |  ALT   |   LWR   | RSE/SPC |       |  RET  |   BKSP  |   GUI   |
+//                            '--------+---------+---------'       '-------+---------+---------'
+                        bindings = <
+     &kp ESC    &kp Q       &kp W       &kp E        &kp R        &kp T          &kp Y      &kp U        &kp I        &kp O       &kp P          &kp LBKT
+     &kp LSHFT  &hm LGUI A  &hm LALT S  &hm LCTRL D  &hm LSHFT F  &kp G          &kp H      &hm LSHFT J  &hm LCTRL K  &hm LALT L  &hm LGUI SEMI  &kp SQT
+     &kp LCTRL  &kp Z       &kp X       &kp C        &kp V        &kp B          &kp N      &kp M        &kp COMMA    &kp DOT     &kp FSLH       &kp RBKT
+                            &kp LALT    &mo_f19 LWR  &lt_f20 RSE SPACE               &kp ENTER  &kp BSPC     &kp LWIN
+                        >;
+                };
+
+
+                game_layer {
+// .-------------------------------------------------------.       .-----------------------------------------------------------.
+// |  ESC  |    T    |    Q   |   W    |    E    |    R    |       |   Y   |    U    |    I    |    O    |     P    |     [    |
+// |-------+---------+--------+--------+---------+---------|       |-------+---------+---------+---------+----------+----------|
+// |   G   |   SHFT  |    A   |   S    |    D    |    F    |       |   H   |    J    |    K    |    L    |     ;    |     '    |
+// |-------+---------+--------+--------+---------+---------|       |-------+---------+---------+---------+----------+----------|
+// |   Z   |   CTRL  |    H   |   C    |    V    |    B    |       |   N   |    M    |    ,    |    .    |     /    |     ]    |
+// '--------------------------+--------+---------+---------+       |-------+---------+---------+-------------------------------'
+//                            |  ALT   |   LWR   |   SPC   |       |  RET  |   BKSP  |   GUI   |
+//                            '--------+---------+---------'       '-------+---------+---------'
+                        bindings = <
+     &kp ESC  &kp T      &kp Q     &kp W    &kp E   &kp R          &kp Y      &kp U     &kp I      &kp O    &kp P     &kp LBKT
+     &kp G    &kp LSHFT  &kp A     &kp S    &kp D   &kp F          &kp H      &kp J     &kp K      &kp L    &kp SEMI  &kp SQT
+     &kp Z    &kp LCTRL  &kp H     &kp C    &kp V   &kp B          &kp N      &kp M     &kp COMMA  &kp DOT  &kp FSLH  &kp RBKT
+                         &kp LALT  &mo_f19 LWR  &kp SPACE              &kp ENTER  &kp BSPC  &kp LWIN
+                        >;
+                };
+
+
+
+                lower_layer {
+// .----------------------------------------------------------.        .-----------------------------------------------------.
+// |    TAB    |   !    |   @    |   #    |    $    |    %     |       |    ^   |    &   |    *    |    (   |    )   |  DEL  |
+// |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
+// |   SHFT    |    ~   |    *   |   +    |         |     =    |       |  left  |  down  |    up   |  right |   pu   |  pd   |
+// |-----------+--------+--------+--------+---------+----------|       |--------+--------+---------+--------+--------+-------|
+// |   CTRL    |    |   |    /   |   -    |         |  insert  |       |  home  |  end   |    ,    |    .   |    ?   |   \   |
+// '-----------------------------+--------+---------+----------+       |--------+--------+---------+-------------------------'
+//                               |  ALT   |         |ADJ_ENTER |       |   RET  |  CTRL  |  SHIFT  |
+//                               '--------+---------+----------'       '--------+--------+---------'
+
+                        bindings = <
+   &kp TAB     &kp EXCLAMATION   &kp AT            &kp HASH     &kp DOLLAR  &kp PERCENT        &kp CARET   &kp AMPS     &kp STAR     &kp LPAR    &kp RPAR       &kp DEL
+   &kp LSHFT   &kp GRAVE         &kp KP_MULTIPLY   &kp KP_PLUS  &trans      &kp KP_EQUAL       &kp LEFT    &kp DOWN     &kp UP       &kp RIGHT   &kp PG_UP      &kp PG_DN
+   &kp LCTRL   &kp PIPE          &kp KP_DIVIDE     &kp MINUS    &trans      &kp INSERT         &kp HOME    &kp END      &kp COMMA    &kp PERIOD  &kp QUESTION   &kp BSLH
+                                                   &kp LALT     &trans      &lt_f20 ADJ ENTER      &kp ENTER   &kp RCTRL    &kp RSHIFT
+                        >;
+                };
+
+
+                  raise_layer {
+// .------------------------------------------------------.       .-----------------------------------------------------.
+// |   TAB   |    *   |    1   |    2   |    3   |    -   |       | vol up |   F1   |   F2   |   F3   |   F4   |   DEL  |
+// |---------+--------+--------+--------+--------+--------|       |--------+--------+--------+--------+--------+--------|
+// |   SHFT  |    /   |    4   |    5   |    6   |    +   |       | vol dn |   F5   |   F6   |   F7   |   F8   |    ~   |
+// |---------+--------+--------+--------+--------+--------|       |--------+--------+--------+--------+--------+--------|
+// |   CTRL  |    =   |    7   |    8   |    9   |    .   |       |  next  |   F9   |   F10  |   F11  |   F12  |    \   |
+// '---------------------------+--------+--------+--------+       |-------+---------+--------+--------------------------'
+//                             |    0   |   ADJ  |        |       |        |        |        |
+//                             '--------+--------+--------'       '--------+--------+--------'
+                        bindings = <
+   &kp TAB    &kp KP_ASTERISK &kp N1 &kp N2 &kp N3 &kp MINUS           &kp C_VOL_UP &kp F1  &kp F2  &kp F3  &kp F4  &kp DEL
+   &kp LSHFT  &kp KP_SLASH    &kp N4 &kp N5 &kp N6 &kp KP_PLUS         &kp C_VOL_DN &kp F5  &kp F6  &kp F7  &kp F8  &kp GRAVE
+   &kp LCTRL  &kp EQUAL       &kp N7 &kp N8 &kp N9 &kp KP_DOT          &kp C_NEXT &kp F9  &kp F10 &kp F11 &kp F12 &kp BSLH
+                              &kp N0        &mo_f19 ADJ   &trans           &trans &trans  &trans
+                        >;
+                };
+
+
+                adjust_layer {
+// .--------------------------------------------------------.       .------------------------------------------------------.
+// |  reset  |        |        |        |         |  KP_NUM |       |  DEF   |  GAME  |        |        |        |  reset  |
+// |---------+--------+--------+--------+---------+---------|       |--------+--------+--------+--------+--------+---------|
+// |         |  BT1   |  BT2   |  BT3   |  BT4    |  BT5    |       |  BT5   |  BT4   |  BT3   |  BT2   |  BT1   |         |
+// |---------+--------+--------+--------+---------+---------|       |--------+--------+--------+--------+--------+---------|
+// |  BTCLR  |        |        |        |         |         |       |        |        |        |        |        |  BTCLR  |
+// '---------------------------+--------+---------+---------+       |--------+--------+--------+---------------------------'
+//                             |        |         |         |       |        |        |        |
+//                             '--------+---------+---------'       '--------+--------+--------'
+
+                        bindings = <
+   &sys_reset      &trans        &trans        &trans        &trans          &kp KP_NUM            &tog DEF      &tog GAME        &trans        &trans        &trans        &sys_reset
+   &sys_reset      &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3    &bt BT_SEL 4      &bt BT_SEL 4  &bt BT_SEL 3  &bt BT_SEL 2  &bt BT_SEL 1  &bt BT_SEL 0  &trans
+   &bt BT_CLR  &trans        &trans        &trans        &trans          &trans            &trans        &trans        &trans        &trans        &trans        &bt BT_CLR
+                             &trans        &trans        &trans                            &trans        &trans        &trans
+                        >;
+                };
+         };
+};
+
+</script>
+
+<script>
+'use strict';
+
+/* ---------- ZMK key names ---------- */
+const K = {};
+function def(names, label, code, shift = false, sub = '') {
+  for (const n of names.split(' ')) K[n] = { label, code, shift, sub };
+}
+for (const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') def(c, c, 'Key' + c);
+for (let i = 0; i < 10; i++) {
+  def(`N${i} NUMBER_${i}`, String(i), 'Digit' + i);
+  def(`KP_N${i} KP_NUMBER_${i}`, String(i), 'Numpad' + i, false, 'num');
+}
+for (let i = 1; i <= 24; i++) def('F' + i, 'F' + i, 'F' + i);
+def('ESC ESCAPE', 'Esc', 'Escape'); def('TAB', 'Tab', 'Tab'); def('ENTER RET RETURN', 'Enter', 'Enter');
+def('SPACE SPC', 'Space', 'Space'); def('BSPC BACKSPACE', '⌫', 'Backspace'); def('DEL DELETE', 'Del', 'Delete');
+def('INS INSERT', 'Ins', 'Insert'); def('HOME', 'Home', 'Home'); def('END', 'End', 'End');
+def('PG_UP PAGE_UP', 'PgUp', 'PageUp'); def('PG_DN PAGE_DOWN', 'PgDn', 'PageDown');
+def('LEFT LEFT_ARROW', '←', 'ArrowLeft'); def('RIGHT RIGHT_ARROW', '→', 'ArrowRight');
+def('UP UP_ARROW', '↑', 'ArrowUp'); def('DOWN DOWN_ARROW', '↓', 'ArrowDown');
+def('CAPS CAPSLOCK CLCK', 'Caps', 'CapsLock'); def('PSCRN PRINTSCREEN', 'PrtSc', 'PrintScreen');
+def('LBKT LEFT_BRACKET', '[', 'BracketLeft'); def('RBKT RIGHT_BRACKET', ']', 'BracketRight');
+def('LBRC LEFT_BRACE', '{', 'BracketLeft', true); def('RBRC RIGHT_BRACE', '}', 'BracketRight', true);
+def('SEMI SEMICOLON', ';', 'Semicolon'); def('COLON', ':', 'Semicolon', true);
+def('SQT APOS APOSTROPHE SINGLE_QUOTE', "'", 'Quote'); def('DQT DOUBLE_QUOTES', '"', 'Quote', true);
+def('COMMA', ',', 'Comma'); def('LT LESS_THAN', '<', 'Comma', true);
+def('DOT PERIOD', '.', 'Period'); def('GT GREATER_THAN', '>', 'Period', true);
+def('FSLH SLASH', '/', 'Slash'); def('QMARK QUESTION', '?', 'Slash', true);
+def('BSLH BACKSLASH', '\\', 'Backslash'); def('PIPE', '|', 'Backslash', true);
+def('GRAVE', '`', 'Backquote'); def('TILDE', '~', 'Backquote', true);
+def('MINUS', '-', 'Minus'); def('UNDER UNDERSCORE', '_', 'Minus', true);
+def('EQUAL', '=', 'Equal'); def('PLUS', '+', 'Equal', true);
+[['EXCL EXCLAMATION', '!'], ['AT AT_SIGN', '@'], ['HASH POUND', '#'], ['DLLR DOLLAR', '$'], ['PRCNT PERCENT', '%'],
+ ['CARET', '^'], ['AMPS AMPERSAND', '&'], ['STAR ASTRK ASTERISK', '*'], ['LPAR LEFT_PARENTHESIS', '('], ['RPAR RIGHT_PARENTHESIS', ')']]
+  .forEach(([n, l], i) => def(n, l, 'Digit' + ((i + 1) % 10), true));
+def('KP_MULTIPLY KP_ASTERISK', '*', 'NumpadMultiply', false, 'num'); def('KP_PLUS', '+', 'NumpadAdd', false, 'num');
+def('KP_MINUS KP_SUBTRACT', '-', 'NumpadSubtract', false, 'num'); def('KP_DIVIDE KP_SLASH', '/', 'NumpadDivide', false, 'num');
+def('KP_EQUAL', '=', 'NumpadEqual', false, 'num'); def('KP_DOT', '.', 'NumpadDecimal', false, 'num');
+def('KP_ENTER', 'Enter', 'NumpadEnter', false, 'num'); def('KP_NUM KP_NUMLOCK KP_NLCK', 'NumLk', 'NumLock');
+def('C_VOL_UP C_VOLUME_UP', '🔊', 'AudioVolumeUp', false, '+'); def('C_VOL_DN C_VOLUME_DOWN', '🔉', 'AudioVolumeDown', false, '−');
+def('C_MUTE', '🔇', 'AudioVolumeMute'); def('C_NEXT', '⏭', 'MediaTrackNext'); def('C_PREV', '⏮', 'MediaTrackPrevious');
+def('C_PP C_PLAY_PAUSE', '⏯', 'MediaPlayPause');
+
+const MODS = {};
+for (const [names, mod, side] of [
+  ['LSHFT LSHIFT LEFT_SHIFT', 'shift', 'Left'], ['RSHFT RSHIFT RIGHT_SHIFT', 'shift', 'Right'],
+  ['LCTRL LCTL LEFT_CONTROL', 'ctrl', 'Left'], ['RCTRL RCTL RIGHT_CONTROL', 'ctrl', 'Right'],
+  ['LALT LEFT_ALT', 'alt', 'Left'], ['RALT RIGHT_ALT', 'alt', 'Right'],
+  ['LGUI LWIN LCMD LMETA LEFT_GUI', 'gui', 'Left'], ['RGUI RWIN RCMD RMETA RIGHT_GUI', 'gui', 'Right'],
+]) {
+  const base = { shift: 'Shift', ctrl: 'Control', alt: 'Alt', gui: 'Meta' }[mod];
+  for (const n of names.split(' ')) MODS[n] = { mod, code: base + side };
+}
+const MOD_SYM = { shift: '⇧', ctrl: '⌃', alt: '⌥', gui: '⌘' };
+const MOD_NAME = { shift: 'Shift', ctrl: 'Ctrl', alt: 'Opt', gui: 'Cmd' };
+const MOD_ORDER = ['ctrl', 'alt', 'shift', 'gui'];
+const CODE_MOD = {};
+for (const m of Object.values(MODS)) CODE_MOD[m.code] = m.mod;
+const modKey = mods => MOD_ORDER.filter(m => mods.has(m)).join('+');
+const modSyms = mods => MOD_ORDER.filter(m => mods.has(m)).map(m => MOD_SYM[m]).join('');
+
+const SHIFTED = { Digit1: '!', Digit2: '@', Digit3: '#', Digit4: '$', Digit5: '%', Digit6: '^', Digit7: '&', Digit8: '*', Digit9: '(', Digit0: ')',
+  Backquote: '~', Minus: '_', Equal: '+', BracketLeft: '{', BracketRight: '}', Backslash: '|', Semicolon: ':', Quote: '"', Comma: '<', Period: '>', Slash: '?' };
+
+/* macOS shortcuts — что получится с зажатым модификатором */
+const SHORTCUTS = {
+  gui: { KeyA: 'Выделить всё', KeyC: 'Копировать', KeyV: 'Вставить', KeyX: 'Вырезать', KeyZ: 'Отменить', KeyS: 'Сохранить',
+    KeyF: 'Найти', KeyG: 'Найти далее', KeyQ: 'Выйти', KeyW: 'Закрыть вкладку', KeyT: 'Новая вкладка', KeyN: 'Новое окно',
+    KeyR: 'Обновить', KeyP: 'Печать', KeyO: 'Открыть', KeyL: 'Адресная строка', KeyH: 'Скрыть приложение', KeyM: 'Свернуть',
+    KeyB: 'Жирный', KeyI: 'Курсив', KeyU: 'Подчеркнуть', KeyK: 'Вставить ссылку', KeyE: 'Искать выделенное', KeyY: 'История',
+    KeyD: 'Закладка / дублировать', KeyJ: 'Загрузки',
+    Comma: 'Настройки', Backquote: 'Окна приложения', Tab: 'Сменить приложение', Space: 'Spotlight',
+    Backspace: 'Удалить до начала строки', ArrowLeft: 'В начало строки', ArrowRight: 'В конец строки',
+    ArrowUp: 'В начало документа', ArrowDown: 'В конец документа', BracketLeft: 'Назад', BracketRight: 'Вперёд',
+    Equal: 'Увеличить', Minus: 'Уменьшить', Digit0: 'Масштаб 100%', Slash: 'Комментарий', Period: 'Прервать',
+    Digit1: 'Вкладка 1', Digit2: 'Вкладка 2', Digit3: 'Вкладка 3', Digit9: 'Последняя вкладка' },
+  'shift+gui': { KeyZ: 'Повторить', Digit3: 'Скриншот экрана', Digit4: 'Скриншот области', Digit5: 'Скриншоты и запись',
+    KeyT: 'Вернуть вкладку', KeyN: 'Новая папка / инкогнито', Period: 'Скрытые файлы', BracketLeft: 'Пред. вкладка',
+    BracketRight: 'След. вкладка', KeyG: 'Найти назад', ArrowLeft: 'Выделить до начала', ArrowRight: 'Выделить до конца',
+    KeyP: 'Палитра команд', KeyF: 'Поиск по проекту' },
+  ctrl: { Tab: 'Следующая вкладка', Space: 'Сменить раскладку', ArrowLeft: 'Рабочий стол ←', ArrowRight: 'Рабочий стол →',
+    ArrowUp: 'Mission Control', ArrowDown: 'Окна приложения', KeyA: 'В начало строки', KeyE: 'В конец строки',
+    KeyK: 'Удалить до конца строки', KeyC: 'Прервать (терминал)', KeyD: 'EOF / удалить символ', KeyR: 'Поиск в истории',
+    KeyL: 'Очистить терминал', KeyW: 'Удалить слово (терм.)', KeyU: 'Удалить строку (терм.)', KeyZ: 'Приостановить' },
+  'ctrl+shift': { Tab: 'Предыдущая вкладка' },
+  alt: { ArrowLeft: 'Слово влево', ArrowRight: 'Слово вправо', Backspace: 'Удалить слово', Delete: 'Удалить слово вперёд',
+    ArrowUp: 'Абзац вверх', ArrowDown: 'Абзац вниз' },
+  'alt+shift': { ArrowLeft: 'Выделить слово ←', ArrowRight: 'Выделить слово →', ArrowUp: 'Выделить абзац ↑', ArrowDown: 'Выделить абзац ↓' },
+  'alt+gui': { Escape: 'Завершить принудительно', KeyH: 'Скрыть остальные', KeyM: 'Свернуть все', KeyV: 'Переместить (Finder)',
+    KeyI: 'DevTools', KeyD: 'Скрыть Dock' },
+  'ctrl+gui': { KeyQ: 'Заблокировать экран', KeyF: 'Полный экран', Space: 'Эмодзи' },
+};
+
+/* ---------- Devicetree mini-parser ---------- */
+function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, ''); }
+function parseDefines(s) {
+  const d = {};
+  for (const m of s.matchAll(/^\s*#define\s+(\w+)\s+(.+?)\s*$/gm)) d[m[1]] = m[2];
+  return d;
+}
+function parseDT(src) {
+  const s = src.replace(/^\s*#[^\n]*$/gm, '');
+  let i = 0;
+  const ws = () => { while (i < s.length && /\s/.test(s[i])) i++; };
+  function body() {
+    const node = { props: {}, children: [] };
+    for (;;) {
+      ws();
+      if (i >= s.length) return node;
+      if (s[i] === '}') { i++; ws(); if (s[i] === ';') i++; return node; }
+      const start = i;
+      while (i < s.length && !'{=;}'.includes(s[i])) i++;
+      const head = s.slice(start, i).trim();
+      const ch = s[i];
+      if (ch === '{') {
+        i++;
+        const child = body();
+        const m = head.match(/^(?:([\w-]+)\s*:\s*)?(.*)$/);
+        child.label = m[1] || null;
+        child.name = m[2].trim();
+        node.children.push(child);
+      } else if (ch === '=') {
+        i++;
+        const vs = i; let depth = 0, str = false;
+        for (; i < s.length; i++) {
+          const c = s[i];
+          if (str) { if (c === '"') str = false; }
+          else if (c === '"') str = true;
+          else if (c === '<') depth++;
+          else if (c === '>') depth--;
+          else if (c === ';' && depth <= 0) break;
+        }
+        node.props[head] = s.slice(vs, i).trim();
+        i++;
+      } else if (ch === ';') {
+        i++;
+        if (head) node.props[head] = true;
+      } else if (ch !== '}') return node;
+    }
+  }
+  return body();
+}
+function walk(node, fn) { fn(node); node.children.forEach(c => walk(c, fn)); }
+const isCompat = (n, c) => typeof n.props.compatible === 'string' && n.props.compatible.includes(`"${c}"`);
+
+function parseBindings(v, defines) {
+  const out = [];
+  for (const tok of v.replace(/[<>,]/g, ' ').split(/\s+/).filter(Boolean)) {
+    if (tok.startsWith('&')) out.push({ beh: tok.slice(1), params: [] });
+    else if (out.length) out[out.length - 1].params.push(defines[tok] ?? tok);
+  }
+  return out;
+}
+const parseNums = (v, defines) => v.replace(/[<>,]/g, ' ').split(/\s+/).filter(Boolean).map(t => parseInt(defines[t] ?? t, 10));
+
+/* ---------- Keymap model ---------- */
+let LAYERS = [], COMBOS = [], HOLDTAPS = {}, MACROS = {}, LAYER_NAMES = [];
+
+function keyInfo(param) {
+  if (param == null) return { label: '?', code: null };
+  const wrap = String(param).match(/^(L|R)(S|C|A|G)\((.*)\)$/);
+  if (wrap) {
+    const inner = keyInfo(wrap[3]);
+    const mod = { S: 'shift', C: 'ctrl', A: 'alt', G: 'gui' }[wrap[2]];
+    const mods = new Set([...(inner.mods || []), mod]);
+    return { ...inner, label: MOD_SYM[mod] + inner.label, mods: [...mods], shift: inner.shift || mod === 'shift' };
+  }
+  if (MODS[param]) {
+    const m = MODS[param];
+    return { label: MOD_SYM[m.mod] + ' ' + MOD_NAME[m.mod], code: m.code, mod: m.mod, shift: false };
+  }
+  if (K[param]) return { ...K[param] };
+  return { label: String(param).replace(/^C_/, ''), code: null };
+}
+const layerIdx = p => { const n = parseInt(p, 10); return Number.isNaN(n) ? 0 : n; };
+
+function describe(b) {
+  const p = b.params;
+  switch (b.beh) {
+    case 'kp': return { type: 'kp', tap: keyInfo(p[0]) };
+    case 'mt': {
+      const m = MODS[p[0]] || { mod: 'shift', code: null };
+      return { type: 'ht', tap: keyInfo(p[1]), hold: { mod: m.mod, code: m.code, label: MOD_SYM[m.mod] + ' ' + MOD_NAME[m.mod] } };
+    }
+    case 'lt': return { type: 'ht', tap: keyInfo(p[1]), hold: { layer: layerIdx(p[0]) } };
+    case 'mo': return { type: 'mo', layer: layerIdx(p[0]) };
+    case 'tog': return { type: 'tog', layer: layerIdx(p[0]) };
+    case 'to': return { type: 'to', layer: layerIdx(p[0]) };
+    case 'sl': return { type: 'sl', layer: layerIdx(p[0]) };
+    case 'sk': return { type: 'kp', tap: { ...keyInfo(p[0]), label: 'sticky ' + keyInfo(p[0]).label } };
+    case 'trans': return { type: 'trans' };
+    case 'none': return { type: 'none', label: '' };
+    case 'bt': {
+      const a = p[0];
+      const lbl = a === 'BT_SEL' ? 'BT ' + (parseInt(p[1], 10) + 1) : a === 'BT_CLR' ? 'BT clr' : a === 'BT_CLR_ALL' ? 'BT clr all'
+        : a === 'BT_NXT' ? 'BT →' : a === 'BT_PRV' ? 'BT ←' : a;
+      return { type: 'misc', label: lbl, info: 'Bluetooth: ' + p.join(' ') };
+    }
+    case 'sys_reset': return { type: 'misc', label: 'Reset', info: 'Перезагрузка' };
+    case 'bootloader': return { type: 'misc', label: 'Boot', info: 'Режим прошивки' };
+    case 'out': return { type: 'misc', label: (p[0] || '').replace('OUT_', ''), info: 'Выход: ' + p.join(' ') };
+    case 'rgb_ug': return { type: 'misc', label: (p[0] || '').replace('RGB_', 'RGB '), info: 'Подсветка' };
+    case 'key_repeat': return { type: 'misc', label: 'Repeat' };
+    case 'caps_word': return { type: 'misc', label: 'CapsW' };
+  }
+  const mac = MACROS[b.beh];
+  if (mac) {
+    if (mac.layer != null) return { type: 'mo', layer: mac.layer === 'param' ? layerIdx(p[0]) : mac.layer, signal: mac.signal };
+    return { type: 'misc', label: b.beh, info: 'Макрос ' + b.beh };
+  }
+  const ht = HOLDTAPS[b.beh];
+  if (ht) {
+    const tap = ht.tapBeh === 'kp' ? keyInfo(p[1]) : { label: p[1] };
+    if (ht.holdBeh === 'mo') return { type: 'ht', tap, hold: { layer: layerIdx(p[0]) }, term: ht.term, flavor: ht.flavor };
+    const hm = MACROS[ht.holdBeh];
+    if (hm?.layer != null)
+      return { type: 'ht', tap, hold: { layer: hm.layer === 'param' ? layerIdx(p[0]) : hm.layer, signal: hm.signal }, term: ht.term, flavor: ht.flavor };
+    const m = MODS[p[0]] || { mod: null, code: null };
+    return { type: 'ht', tap, hold: { mod: m.mod, code: m.code, label: m.mod ? MOD_SYM[m.mod] + ' ' + MOD_NAME[m.mod] : p[0] }, term: ht.term, flavor: ht.flavor };
+  }
+  return { type: 'misc', label: '&' + b.beh, info: [b.beh, ...p].join(' ') };
+}
+
+function loadKeymap(text, sourceLabel) {
+  const clean = stripComments(text);
+  const defines = parseDefines(clean);
+  const root = parseDT(clean);
+  const rev = {};
+  for (const [k, v] of Object.entries(defines)) if (/^\d+$/.test(v) && !(v in rev)) rev[v] = k;
+
+  // макросы вида «&mo СЛОЙ + &kp F19»: слой и сигнальная клавиша, по которой видно удержание
+  MACROS = {};
+  walk(root, n => {
+    if (!(isCompat(n, 'zmk,behavior-macro') || isCompat(n, 'zmk,behavior-macro-one-param')) || !n.label) return;
+    const bs = parseBindings(n.props.bindings || '', defines);
+    const mo = bs.find(x => x.beh === 'mo');
+    const kp = bs.find(x => x.beh === 'kp');
+    MACROS[n.label] = {
+      layer: mo ? (mo.params[0] === 'MACRO_PLACEHOLDER' ? 'param' : layerIdx(mo.params[0])) : null,
+      signal: kp ? keyInfo(kp.params[0]).code : null,
+    };
+  });
+
+  HOLDTAPS = {};
+  walk(root, n => {
+    if (isCompat(n, 'zmk,behavior-hold-tap') && n.label) {
+      const bs = parseBindings(n.props.bindings || '', {});
+      HOLDTAPS[n.label] = {
+        holdBeh: bs[0]?.beh, tapBeh: bs[1]?.beh,
+        term: parseInt((n.props['tapping-term-ms'] || '').replace(/[<>]/g, ''), 10) || null,
+        flavor: (n.props.flavor || '').replace(/"/g, ''),
+      };
+    }
+  });
+
+  LAYERS = []; COMBOS = [];
+  walk(root, n => {
+    if (isCompat(n, 'zmk,keymap')) {
+      n.children.forEach((c, idx) => {
+        if (!c.props.bindings) return;
+        const name = (typeof c.props['display-name'] === 'string' && c.props['display-name'].replace(/"/g, ''))
+          || rev[String(idx)] || c.name.replace(/_layer$/, '').toUpperCase();
+        LAYERS.push({ name, node: c.name, bindings: parseBindings(c.props.bindings, defines) });
+      });
+    }
+  });
+  walk(root, n => {
+    if (isCompat(n, 'zmk,combos')) {
+      for (const c of n.children) {
+        if (!c.props['key-positions'] || !c.props.bindings) continue;
+        const b = parseBindings(c.props.bindings, defines)[0];
+        COMBOS.push({
+          name: c.name.replace(/^combo_?/, ''),
+          positions: parseNums(c.props['key-positions'], defines),
+          binding: b,
+          timeout: c.props['timeout-ms'] ? parseNums(c.props['timeout-ms'], defines)[0] : 50,
+          layers: c.props.layers ? parseNums(c.props.layers, defines) : null,
+        });
+      }
+    }
+  });
+  for (const L of LAYERS) L.desc = L.bindings.map(describe);
+  for (const c of COMBOS) c.desc = describe(c.binding);
+  LAYER_NAMES = LAYERS.map(l => l.name);
+
+  resetState();
+  buildBoard();
+  document.getElementById('src').textContent = `${sourceLabel} · ${LAYERS.length} слоёв · ${COMBOS.length} комбо`;
+  const bad = LAYERS.filter(l => l.bindings.length !== GEO.length);
+  if (bad.length) document.getElementById('src').textContent += ` · ⚠ в слое ${bad[0].name} ${bad[0].bindings.length} клавиш вместо ${GEO.length}`;
+  render();
+}
+
+/* ---------- Corne geometry (42 keys) ---------- */
+const OFF = [0.375, 0.375, 0.125, 0, 0.125, 0.25];
+const GEO = [];
+for (let r = 0; r < 3; r++) {
+  for (let c = 0; c < 6; c++) GEO.push({ x: c, y: r + OFF[c], rot: 0 });
+  for (let c = 0; c < 6; c++) GEO.push({ x: 8.5 + c, y: r + OFF[5 - c], rot: 0 });
+}
+const THUMBS = [{ x: 3.35, y: 3.2, rot: 0 }, { x: 4.45, y: 3.32, rot: 12 }, { x: 5.55, y: 3.6, rot: 26 }];
+THUMBS.forEach(t => GEO.push(t));
+[...THUMBS].reverse().forEach(t => GEO.push({ x: 13.5 - t.x, y: t.y, rot: -t.rot }));
+const center = p => ({ x: GEO[p].x + 0.5, y: GEO[p].y + 0.5 });
+
+const layerColor = i => `var(--l${i % 6})`;
+
+/* ---------- State ---------- */
+const state = { latched: new Map(), toggled: new Set(), phys: new Map(), physIgnore: new Set(), physLatch: new Map(), inferredLayer: null, view: null };
+function dropPhysLatches() {
+  for (const pos of state.physLatch.values()) state.latched.delete(pos);
+  state.physLatch.clear();
+}
+function resetState() {
+  state.latched.clear(); state.toggled.clear(); state.phys.clear(); state.physIgnore.clear(); state.physLatch.clear();
+  state.inferredLayer = null; state.view = null;
+}
+function activeLayers() {
+  const s = new Set([0, ...state.toggled]);
+  for (const h of state.latched.values()) if (h.holdLayer != null) s.add(h.holdLayer);
+  if (state.inferredLayer != null) s.add(state.inferredLayer);
+  if (state.view != null) s.add(state.view);
+  return s;
+}
+function resolve(pos, act) {
+  const order = [...act].sort((a, b) => b - a);
+  for (const l of order) {
+    const d = LAYERS[l]?.desc[pos];
+    if (d && d.type !== 'trans') return { l, d };
+  }
+  return { l: 0, d: LAYERS[0]?.desc[pos] };
+}
+const leadsTo = d => d && (d.type === 'mo' || d.type === 'tog' || d.type === 'to' || d.type === 'sl' ? d.layer : d.type === 'ht' && d.hold.layer != null ? d.hold.layer : null);
+
+/* ---------- Mouse ---------- */
+function clickKey(pos) {
+  if (state.latched.has(pos)) { state.latched.delete(pos); render(); return; }
+  const { l, d } = resolve(pos, activeLayers());
+  if (!d) return;
+  if (d.type === 'tog') {
+    if (d.layer !== 0) state.toggled.has(d.layer) ? state.toggled.delete(d.layer) : state.toggled.add(d.layer);
+    flash(pos); render(); return;
+  }
+  if (d.type === 'to') { state.toggled.clear(); if (d.layer) state.toggled.add(d.layer); flash(pos); render(); return; }
+  latchPos(pos, l, d, false);
+  render();
+}
+function latchPos(pos, l, d, phys) {
+  const h = { pos, l, d, holdLayer: null, mod: null, phys };
+  if (d.type === 'mo' || d.type === 'sl') h.holdLayer = d.layer;
+  if (d.type === 'ht') { if (d.hold.layer != null) h.holdLayer = d.hold.layer; else h.mod = d.hold.mod; }
+  if (d.type === 'kp' && d.tap.mod) h.mod = d.tap.mod;
+  state.latched.set(pos, h);
+}
+function flash(pos) {
+  const el = KEY_ELS[pos];
+  el.classList.add('held');
+  setTimeout(() => render(), 180);
+}
+
+/* ---------- Physical keyboard ---------- */
+function codeCandidates(code) {
+  const out = [];
+  LAYERS.forEach((L, li) => L.desc.forEach((d, pos) => {
+    if (!d) return;
+    if ((d.type === 'kp' || d.type === 'ht') && d.tap?.code === code) out.push({ pos, layer: li, kind: 'tap', shift: !!d.tap.shift, d });
+    if (d.type === 'ht' && d.hold.code && d.hold.code === code) out.push({ pos, layer: li, kind: 'hold', shift: false, d });
+  }));
+  COMBOS.forEach((c, ci) => {
+    if (c.desc.tap?.code === code) out.push({ combo: ci, kind: 'combo', shift: !!c.desc.tap.shift, layer: -1 });
+  });
+  return out;
+}
+function holdersOf(L, seen = new Set()) {
+  // позиции, удержание которых включает слой L (с учётом цепочек LWR → ADJ)
+  if (seen.has(L)) return [];
+  seen.add(L);
+  const res = [];
+  LAYERS.forEach((Ly, li) => Ly.desc.forEach((d, pos) => {
+    if (li === L) return;
+    const t = d && (d.type === 'mo' ? d.layer : d.type === 'ht' ? d.hold.layer : null);
+    if (t === L) {
+      res.push(pos);
+      if (li !== 0 && !state.toggled.has(li)) res.push(...holdersOf(li, seen));
+    }
+  }));
+  return res;
+}
+function onKeyDown(e) {
+  if (e.target instanceof HTMLInputElement) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  state.view = null;
+  // F19/F20 из прошивки: клавиша слоя зажата — ведём себя как при её удержании
+  const act0 = activeLayers();
+  for (let pos = 0; pos < GEO.length; pos++) {
+    if (state.latched.has(pos)) continue;
+    const { l, d } = resolve(pos, act0);
+    const sig = d?.type === 'mo' ? d.signal : d?.type === 'ht' ? d.hold.signal : null;
+    if (sig && sig === e.code) {
+      latchPos(pos, l, d, true);
+      state.physLatch.set(e.code, pos);
+      state.inferredLayer = null;
+      render();
+      return;
+    }
+  }
+  const now = performance.now();
+  const isMod = !!CODE_MOD[e.code];
+  let cands = codeCandidates(e.code);
+  if (!isMod) {
+    const shiftEntries = [...state.phys.entries()].filter(([c]) => CODE_MOD[c] === 'shift');
+    const recent = shiftEntries.filter(([, v]) => now - v.t < 60);
+    let want = false;
+    if (e.shiftKey && (recent.length || !shiftEntries.length)) want = true;
+    const pref = cands.filter(c => c.shift === want);
+    if (pref.length) cands = pref;
+    if (want && cands.some(c => c.shift)) for (const [c] of recent) { state.phys.delete(c); state.physIgnore.add(c); }
+  }
+  const matches = act => cands.filter(c => c.kind === 'combo' ? comboActive(COMBOS[c.combo], act) : resolve(c.pos, act).d === c.d);
+  let chosen = matches(activeLayers());
+  if (!chosen.length && cands.length) {
+    const ls = [...new Set(cands.filter(c => c.layer >= 0).map(c => c.layer))].sort((a, b) => a - b);
+    const L = ls.find(l => l > 0) ?? ls[0];
+    state.inferredLayer = L;
+    chosen = matches(activeLayers());
+    if (!chosen.length) chosen = cands.filter(c => c.layer === L);
+  }
+  state.phys.set(e.code, { t: now, chosen, key: e.key, code: e.code });
+  render();
+}
+function onKeyUp(e) {
+  if (e.target instanceof HTMLInputElement) return;
+  e.preventDefault();
+  // macOS не присылает keyup для клавиш, нажатых с ⌘ — отпускаем всё вместе с ⌘
+  if (CODE_MOD[e.code] === 'gui') state.phys.clear();
+  if (state.physLatch.has(e.code)) { state.latched.delete(state.physLatch.get(e.code)); state.physLatch.delete(e.code); }
+  state.phys.delete(e.code);
+  state.physIgnore.delete(e.code);
+  if (!state.phys.size) state.inferredLayer = null;
+  render();
+}
+function comboActive(c, act) { return !c.layers || c.layers.some(l => act.has(l)); }
+
+/* ---------- Board DOM ---------- */
+let KEY_ELS = [], PILL_ELS = [];
+function buildBoard() {
+  const kbd = document.getElementById('kbd');
+  kbd.innerHTML = '';
+  KEY_ELS = GEO.map((g, pos) => {
+    const el = document.createElement('div');
+    el.className = 'key';
+    el.style.left = `calc(var(--u) * ${g.x + 0.04})`;
+    el.style.top = `calc(var(--u) * ${g.y + 0.04})`;
+    if (g.rot) el.style.transform = `rotate(${g.rot}deg)`;
+    el.dataset.rot = g.rot;
+    el.innerHTML = '<span class="mh"></span><span class="main"></span><span class="hold"></span><span class="badge"></span>';
+    el.addEventListener('mousedown', ev => { ev.preventDefault(); document.getElementById('board').focus(); clickKey(pos); });
+    kbd.appendChild(el);
+    return el;
+  });
+  PILL_ELS = COMBOS.map(c => {
+    const el = document.createElement('div');
+    el.className = 'pill';
+    const pts = c.positions.filter(p => GEO[p]).map(center);
+    const x = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+    const y = pts.reduce((a, p) => a + p.y, 0) / pts.length;
+    el.style.left = `calc(var(--u) * ${x})`;
+    el.style.top = `calc(var(--u) * ${y})`;
+    kbd.appendChild(el);
+    return el;
+  });
+  buildTabs();
+  buildComboTable();
+}
+function buildTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  LAYERS.forEach((L, i) => {
+    const b = document.createElement('button');
+    b.className = 'tab';
+    b.style.setProperty('--lc', layerColor(i));
+    b.innerHTML = `<span class="dot"></span>${esc(L.name)}`;
+    b.title = i === 0 ? 'Базовый слой' : `Показать слой ${L.name} (как будто он удерживается)`;
+    b.onclick = () => { state.view = (state.view === i || i === 0) ? null : i; render(); };
+    tabs.appendChild(b);
+  });
+}
+function buildComboTable() {
+  const t = document.getElementById('combos');
+  const base = LAYERS[0]?.desc || [];
+  t.innerHTML = '<tr><th>Клавиши (база)</th><th>Позиции</th><th>Результат</th><th>Окно</th></tr>' + COMBOS.map((c, i) =>
+    `<tr class="clickable" data-i="${i}"><td>${c.positions.map(p => esc(shortLabel(base[p]))).join(' + ')}</td>` +
+    `<td>${c.positions.join(', ')}</td><td><b>${esc(shortLabel(c.desc))}</b>${c.layers ? ` <span class="src">(слои ${c.layers.map(l => LAYER_NAMES[l]).join(', ')})</span>` : ''}</td>` +
+    `<td>${c.timeout} мс</td></tr>`).join('');
+  t.querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => {
+    const c = COMBOS[+tr.dataset.i];
+    state.latched.clear();
+    state.latched.set(c.positions[0], { pos: c.positions[0], l: 0, d: resolve(c.positions[0], activeLayers()).d, holdLayer: null, mod: null });
+    render();
+  });
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function shortLabel(d) {
+  if (!d) return '';
+  switch (d.type) {
+    case 'kp': return d.tap.label;
+    case 'ht': return d.tap.label;
+    case 'mo': return LAYER_NAMES[d.layer] ?? 'L' + d.layer;
+    case 'tog': return 'tog ' + (LAYER_NAMES[d.layer] ?? d.layer);
+    case 'to': return 'to ' + (LAYER_NAMES[d.layer] ?? d.layer);
+    case 'sl': return 'one-shot ' + (LAYER_NAMES[d.layer] ?? d.layer);
+    case 'trans': return '▽';
+    case 'none': return '';
+    default: return d.label;
+  }
+}
+function fullLabel(d) {
+  if (!d) return '';
+  if (d.type === 'ht') return d.tap.label + ' / удерж. ' + holdLabel(d);
+  return shortLabel(d);
+}
+const holdLabel = d => d.hold.layer != null ? (LAYER_NAMES[d.hold.layer] ?? 'L' + d.hold.layer) : d.hold.label;
+
+function keyTitle(pos, d, l) {
+  const parts = [`#${pos} · слой ${LAYER_NAMES[l]}`];
+  if (!d) return parts.join('');
+  if (d.type === 'ht') parts.push(`тап: ${d.tap.label}`, `удержание: ${holdLabel(d)}${d.term ? ` (${d.term} мс, ${d.flavor})` : ''}`);
+  else if (d.type === 'mo') parts.push(`удерживать → слой ${LAYER_NAMES[d.layer]}`);
+  else if (d.type === 'tog') parts.push(`переключить слой ${LAYER_NAMES[d.layer]}`);
+  else if (d.type === 'misc') parts.push(d.info || d.label);
+  else parts.push(shortLabel(d));
+  const cs = COMBOS.filter(c => c.positions.includes(pos));
+  for (const c of cs) parts.push(`комбо: ${c.positions.join('+')} → ${shortLabel(c.desc)}`);
+  return parts.join('\n');
+}
+
+/* ---------- Render ---------- */
+function render() {
+  if (!LAYERS.length) return;
+  const act = activeLayers();
+  const top = Math.max(...act);
+  const latched = state.latched;
+
+  // фактические клавиши, нажатые на клавиатуре
+  const physPos = new Map(); const physCombos = new Set(); const physMods = new Set();
+  for (const [code, v] of state.phys) {
+    if (CODE_MOD[code]) physMods.add(CODE_MOD[code]);
+    const amb = v.chosen.length > 1;
+    for (const c of v.chosen) {
+      if (c.kind === 'combo') { if (!amb) physCombos.add(c.combo); COMBOS[c.combo].positions.forEach(p => physPos.set(p, physPos.get(p) || { amb })); }
+      else physPos.set(c.pos, { amb: amb && !(physPos.get(c.pos)?.amb === false) });
+    }
+  }
+  const inferred = new Set(state.inferredLayer != null ? holdersOf(state.inferredLayer) : []);
+
+  // сработавшие комбо (мышью) и подсказки комбо
+  const fired = [], comboHint = new Map(), pillState = COMBOS.map(() => '');
+  COMBOS.forEach((c, i) => {
+    if (!comboActive(c, act)) return;
+    const n = c.positions.filter(p => latched.has(p)).length;
+    if (n === c.positions.length) { fired.push(i); pillState[i] = 'fired'; }
+    else if (n > 0) {
+      pillState[i] = 'hint';
+      c.positions.filter(p => !latched.has(p)).forEach(p => {
+        if (!comboHint.has(p)) comboHint.set(p, []);
+        comboHint.get(p).push(shortLabel(c.desc));
+      });
+    }
+    if (physCombos.has(i)) pillState[i] = 'fired';
+  });
+  const consumed = new Set(fired.flatMap(i => COMBOS[i].positions));
+
+  // модификаторы
+  const mods = new Set(physMods);
+  for (const h of latched.values()) if (h.mod && !consumed.has(h.pos)) mods.add(h.mod);
+  const mk = modKey(mods);
+  const anyHeld = latched.size > 0 || state.phys.size > 0;
+
+  KEY_ELS.forEach((el, pos) => {
+    const h = latched.get(pos);
+    const r = h ? { l: h.l, d: h.d } : resolve(pos, act);
+    const d = r.d;
+    const cls = ['key'];
+    const main = el.querySelector('.main'), hold = el.querySelector('.hold'), mh = el.querySelector('.mh'), badge = el.querySelector('.badge');
+    const lbl = shortLabel(d);
+    main.innerHTML = esc(lbl) + (d?.tap?.sub ? `<span class="sub">${esc(d.tap.sub)}</span>` : '');
+    main.className = 'main' + (lbl.length > 6 ? ' xlong' : lbl.length > 3 ? ' long' : '');
+    if (!h && r.l !== top) cls.push('fall');
+    if (d?.type === 'none' || d?.type === 'trans') cls.push('none');
+
+    const target = leadsTo(d);
+    hold.className = 'hold';
+    if (d?.type === 'ht') {
+      hold.textContent = holdLabel(d);
+      if (d.hold.layer != null) hold.classList.add('lay');
+    } else if (d?.type === 'mo') { hold.textContent = 'держать'; hold.classList.add('lay'); }
+    else if (d?.type === 'tog') { hold.textContent = state.toggled.has(d.layer) ? 'вкл ●' : 'переключ.'; hold.classList.add('lay'); }
+    else hold.textContent = '';
+    el.style.setProperty('--hc', target != null ? layerColor(target) : 'var(--layer)');
+    el.style.setProperty('--kc', target != null ? layerColor(target) : 'transparent');
+
+    if (h) cls.push(h.phys ? 'phys' : 'held');
+    if (physPos.has(pos)) { cls.push('phys'); if (physPos.get(pos).amb) cls.push('amb'); }
+    else if (inferred.has(pos) && !h) cls.push('inferred');
+    if (consumed.has(pos)) cls.push('combo-fired');
+    if (comboHint.has(pos) && !h) { cls.push('hint-combo'); badge.textContent = '→ ' + comboHint.get(pos).join(' / '); }
+    else badge.textContent = '';
+    if (anyHeld && target != null && target !== top && !h && !act.has(target) || (anyHeld && d?.type === 'tog' && !h)) cls.push('hint-layer');
+
+    // что даст модификатор
+    let mhText = '', mhTitle = '';
+    if (mods.size && !h && !physPos.has(pos) && d?.tap?.code && !d.tap.mod) {
+      const sc = SHORTCUTS[mk]?.[d.tap.code];
+      if (sc) { mhText = sc; mhTitle = `${modSyms(mods)}${d.tap.label} — ${sc}`; }
+      else if (mk === 'shift' && SHIFTED[d.tap.code] && !d.tap.shift) mhText = SHIFTED[d.tap.code];
+      else if (mk !== 'shift') mhText = modSyms(mods) + d.tap.label;
+    }
+    mh.textContent = mhText;
+    el.title = (mhTitle ? mhTitle + '\n' : '') + keyTitle(pos, d, r.l);
+    el.className = cls.join(' ');
+  });
+
+  PILL_ELS.forEach((el, i) => {
+    el.textContent = shortLabel(COMBOS[i].desc);
+    el.className = 'pill' + (pillState[i] ? ' ' + pillState[i] : '');
+  });
+  document.getElementById('kbd').classList.toggle('nopills', !document.getElementById('showPills').checked);
+
+  // вкладки слоёв
+  document.querySelectorAll('#tabs .tab').forEach((b, i) => {
+    b.classList.toggle('on', act.has(i));
+    b.classList.toggle('top', i === top);
+  });
+
+  renderStatus({ act, top, fired, consumed, mods, mk, physPos, physCombos });
+  renderNext({ act, top, comboHint, mods, mk, anyHeld });
+}
+
+function renderStatus({ top, fired, consumed, mods, mk, physCombos }) {
+  const st = document.getElementById('status');
+  const parts = [`<span class="lbl">Слой</span><span class="chip layer" style="--hc:${layerColor(top)}">${esc(LAYER_NAMES[top])}</span>`];
+  if (state.inferredLayer != null) parts.push('<span class="src">(определён по нажатой клавише)</span>');
+  if (state.toggled.size) parts.push(`<span class="src">включены: ${[...state.toggled].map(l => esc(LAYER_NAMES[l])).join(', ')}</span>`);
+
+  const held = [...state.latched.values()];
+  if (held.length) {
+    parts.push('<span class="lbl">Зажато</span>' + held.map(h => {
+      const isMod = h.mod != null;
+      const lay = h.holdLayer != null;
+      const txt = lay ? (h.d.type === 'ht' ? `${h.d.tap.label} (держ. ${LAYER_NAMES[h.holdLayer]})` : LAYER_NAMES[h.holdLayer])
+        : isMod && h.d.type === 'ht' ? `${h.d.tap.label} (держ. ${MOD_SYM[h.mod]})` : shortLabel(h.d);
+      return `<span class="chip${isMod ? ' mod' : ''}${lay ? ' layer' : ''}" style="--hc:${layerColor(h.holdLayer ?? 0)}">${esc(txt)}</span>`;
+    }).join(' '));
+  }
+  if (state.phys.size) {
+    const items = [...state.phys.values()].map(v => {
+      if (!v.chosen.length) return `<span class="chip phys">${esc(v.code)} ?</span>`;
+      const opts = v.chosen.map(c => c.kind === 'combo'
+        ? 'комбо ' + COMBOS[c.combo].positions.map(p => shortLabel(LAYERS[0].desc[p])).join('+')
+        : `${c.kind === 'hold' ? 'удерж. ' : ''}#${c.pos}${c.layer ? ' ' + LAYER_NAMES[c.layer] : ''}`);
+      return `<span class="chip phys">${esc(v.key === ' ' ? 'Space' : v.key)}</span><span class="src">${esc(opts.join(' или '))}</span>`;
+    });
+    parts.push('<span class="lbl">С клавиатуры</span>' + items.join(' '));
+  }
+
+  // итоговый результат
+  const taps = [];
+  for (const h of held) {
+    if (consumed.has(h.pos) || h.mod || h.holdLayer != null) continue;
+    if (h.d.tap?.code) taps.push(h.d.tap);
+  }
+  for (const i of fired) if (COMBOS[i].desc.tap) taps.push({ ...COMBOS[i].desc.tap, combo: COMBOS[i] });
+  for (const i of physCombos) if (COMBOS[i].desc.tap) taps.push({ ...COMBOS[i].desc.tap, combo: COMBOS[i] });
+  if (taps.length || mods.size) {
+    const t = taps[taps.length - 1];
+    let res = modSyms(mods) + (t ? t.label : ' …');
+    let means = '';
+    if (t && mods.size) means = SHORTCUTS[mk]?.[t.code] || (mk === 'shift' && SHIFTED[t.code]) || '';
+    const comboNote = t?.combo ? `<span class="chip combo">комбо ${t.combo.positions.join('+')}</span>` : '';
+    parts.push(`<span class="lbl">Результат</span>${comboNote}<span class="result">${esc(res)}${means ? ` <span class="means">— ${esc(means)}</span>` : ''}</span>`);
+  }
+  st.innerHTML = parts.join(' ');
+}
+
+function renderNext({ act, top, comboHint, mods, mk }) {
+  const ul = document.getElementById('next');
+  const items = [];
+  const label = p => shortLabel(resolve(p, act).d);
+
+  // комбо
+  COMBOS.forEach(c => {
+    if (!comboActive(c, act)) return;
+    const missing = c.positions.filter(p => !state.latched.has(p));
+    if (missing.length && missing.length < c.positions.length)
+      items.push(`<li><span class="k" style="color:var(--combo)">+ ${esc(missing.map(label).join(' + '))}</span><span>комбо → <b>${esc(shortLabel(c.desc))}</b></span></li>`);
+  });
+  // слои
+  const seen = new Set();
+  for (let pos = 0; pos < GEO.length; pos++) {
+    if (state.latched.has(pos)) continue;
+    const d = resolve(pos, act).d;
+    const t = leadsTo(d);
+    if (t == null || (t === 0 && d.type === 'tog') || seen.has(d.type + t) || (act.has(t) && d.type !== 'tog')) continue;
+    seen.add(d.type + t);
+    const how = d.type === 'tog' ? (state.toggled.has(t) ? 'выключить слой' : 'включить слой') : d.type === 'ht' ? `удерживать ${d.tap.label} → слой` : 'удерживать → слой';
+    items.push(`<li><span class="k" style="color:${layerColor(t)}">#${pos} ${esc(shortLabel(d))}</span><span>${how} <b>${esc(LAYER_NAMES[t])}</b></span></li>`);
+  }
+  // модификаторы
+  if (mods.size) {
+    const sc = SHORTCUTS[mk] || {};
+    const rows = [];
+    for (let pos = 0; pos < GEO.length; pos++) {
+      const d = resolve(pos, act).d;
+      if (d?.tap?.code && sc[d.tap.code] && !rows.some(r => r.code === d.tap.code)) rows.push({ code: d.tap.code, l: d.tap.label, m: sc[d.tap.code] });
+    }
+    if (mk === 'shift') items.push('<li><span class="k" style="color:var(--mod)">⇧</span><span>на клавишах показан символ с Shift</span></li>');
+    rows.slice(0, 18).forEach(r => items.push(`<li><span class="k" style="color:var(--mod)">${esc(modSyms(mods) + r.l)}</span><span>${esc(r.m)}</span></li>`));
+    if (!rows.length && mk !== 'shift') items.push(`<li><span class="k" style="color:var(--mod)">${esc(modSyms(mods))}</span><span>на клавишах показано сочетание</span></li>`);
+  }
+  if (!state.latched.size && !state.phys.size && state.view == null) {
+    items.unshift('<li class="empty">Зажмите клавишу мышью или нажмите её на Corne — здесь появятся продолжения: комбо, слои и сочетания.</li>');
+  }
+  ul.innerHTML = items.join('') || '<li class="empty">Дальше ничего особенного — обычные клавиши текущего слоя.</li>';
+}
+
+/* ---------- Wiring ---------- */
+const board = document.getElementById('board');
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+window.addEventListener('blur', () => { state.phys.clear(); dropPhysLatches(); state.inferredLayer = null; render(); });
+document.getElementById('clear').onclick = () => { state.latched.clear(); state.physLatch.clear(); state.toggled.clear(); state.phys.clear(); state.inferredLayer = null; state.view = null; render(); };
+document.getElementById('showPills').onchange = render;
+const fileInput = document.getElementById('file');
+document.getElementById('load').onclick = () => fileInput.click();
+fileInput.onchange = async () => { const f = fileInput.files[0]; if (f) loadKeymap(await f.text(), f.name); };
+document.addEventListener('dragover', e => { e.preventDefault(); board.classList.add('drop'); });
+document.addEventListener('dragleave', () => board.classList.remove('drop'));
+document.addEventListener('drop', async e => {
+  e.preventDefault(); board.classList.remove('drop');
+  const f = e.dataTransfer.files[0]; if (f) loadKeymap(await f.text(), f.name);
+});
+
+(async () => {
+  try {
+    const r = await fetch('../config/corne.keymap', { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    loadKeymap(await r.text(), 'config/corne.keymap');
+  } catch {
+    loadKeymap(document.getElementById('embedded-keymap').textContent, 'встроенная копия corne.keymap');
+  }
+  board.focus();
+})();
+</script>
+</body>
+</html>
