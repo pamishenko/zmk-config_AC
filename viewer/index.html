@@ -151,6 +151,7 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
     <div class="tabs" id="tabs"></div>
     <div class="spacer"></div>
     <label class="src"><input type="checkbox" id="showPills" checked> комбо на схеме</label>
+    <button id="layout" title="Раскладка определяется сама по нажатиям; клик — переключить вручную">EN</button>
     <button id="clear">Отпустить всё</button>
     <button id="load">Открыть .keymap…</button>
     <input type="file" id="file" accept=".keymap,.dtsi,.txt" hidden>
@@ -404,7 +405,7 @@ const K = {};
 function def(names, label, code, shift = false, sub = '') {
   for (const n of names.split(' ')) K[n] = { label, code, shift, sub };
 }
-for (const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') def(c, c, 'Key' + c);
+for (const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') def(c, c.toLowerCase(), 'Key' + c);
 for (let i = 0; i < 10; i++) {
   def(`N${i} NUMBER_${i}`, String(i), 'Digit' + i);
   def(`KP_N${i} KP_NUMBER_${i}`, String(i), 'Numpad' + i, false, 'num');
@@ -456,6 +457,63 @@ const CODE_MOD = {};
 for (const m of Object.values(MODS)) CODE_MOD[m.code] = m.mod;
 const modKey = mods => MOD_ORDER.filter(m => mods.has(m)).join('+');
 const modSyms = mods => MOD_ORDER.filter(m => mods.has(m)).map(m => MOD_SYM[m]).join('');
+const isLetter = code => /^Key[A-Z]$/.test(code || '');
+const isLetterChar = s => s.length === 1 && s.toUpperCase() !== s.toLowerCase();
+
+/* ---------- Текущая раскладка ОС: code → символ ---------- */
+const RU = { KeyQ: 'й', KeyW: 'ц', KeyE: 'у', KeyR: 'к', KeyT: 'е', KeyY: 'н', KeyU: 'г', KeyI: 'ш', KeyO: 'щ', KeyP: 'з',
+  BracketLeft: 'х', BracketRight: 'ъ', KeyA: 'ф', KeyS: 'ы', KeyD: 'в', KeyF: 'а', KeyG: 'п', KeyH: 'р', KeyJ: 'о', KeyK: 'л',
+  KeyL: 'д', Semicolon: 'ж', Quote: 'э', KeyZ: 'я', KeyX: 'ч', KeyC: 'с', KeyV: 'м', KeyB: 'и', KeyN: 'т', KeyM: 'ь',
+  Comma: 'б', Period: 'ю' };
+// manual — выбрано кнопкой; seen — последний символ с клавиатуры (ему верим больше, чем getLayoutMap)
+const LAYOUT = { map: null, manual: false, seen: null };
+const isCyr = s => /[а-яё]/i.test(s || '');
+function layoutName(m) {
+  const q = m?.KeyQ;
+  if (!q) return '';
+  if (isCyr(q)) return 'RU';
+  return 'EN';
+}
+const US = {};
+for (const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') US['Key' + c] = c.toLowerCase();
+Object.assign(US, { BracketLeft: '[', BracketRight: ']', Semicolon: ';', Quote: "'", Comma: ',', Period: '.' });
+function setLayout(m) {
+  if (JSON.stringify(m) === JSON.stringify(LAYOUT.map)) return;
+  LAYOUT.map = m;
+  document.getElementById('layout').textContent = layoutName(m) === 'RU' ? 'RU' : 'EN';
+  if (LAYERS.length) { buildComboTable(); render(); }
+}
+async function refreshLayout() {
+  try {
+    if (!navigator.keyboard?.getLayoutMap) return;
+    if (LAYOUT.manual) return;
+    const lm = await navigator.keyboard.getLayoutMap();
+    const m = {};
+    lm.forEach((v, k) => { m[k] = v; });
+    if (LAYOUT.seen && m[LAYOUT.seen.code] !== LAYOUT.seen.ch) return;
+    setLayout(m);
+  } catch { /* API недоступно — учимся по нажатиям */ }
+}
+// раскладку переключили (⌃Space и т.п.) — видно по e.key
+async function learnLayout(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
+  const ch = e.key.toLowerCase();
+  if (!(e.code in RU)) return;
+  LAYOUT.manual = false;
+  LAYOUT.seen = { code: e.code, ch };
+  if (LAYOUT.map?.[e.code] === ch) return;
+  await refreshLayout();
+  if (LAYOUT.map?.[e.code] === ch) return;
+  setLayout(isCyr(ch) ? { ...RU } : { ...US });
+}
+// подпись клавиши в текущей раскладке (только обычные символы без Shift)
+function dispLabel(t) {
+  if (!t) return '';
+  const ch = !t.shift && !t.sub && !t.mod && t.code && LAYOUT.map?.[t.code];
+  return ch && ch.length === 1 ? ch : t.label;
+}
+// как сочетание пишут в macOS: ⌘C, ⌃⇧Tab — буква заглавная
+const withMods = (mods, info) => modSyms(mods) + (isLetter(info.code) ? info.label.toUpperCase() : info.label);
 
 const SHIFTED = { Digit1: '!', Digit2: '@', Digit3: '#', Digit4: '$', Digit5: '%', Digit6: '^', Digit7: '&', Digit8: '*', Digit9: '(', Digit0: ')',
   Backquote: '~', Minus: '_', Equal: '+', BracketLeft: '{', BracketRight: '}', Backslash: '|', Semicolon: ':', Quote: '"', Comma: '<', Period: '>', Slash: '?' };
@@ -561,7 +619,7 @@ function keyInfo(param) {
     const inner = keyInfo(wrap[3]);
     const mod = { S: 'shift', C: 'ctrl', A: 'alt', G: 'gui' }[wrap[2]];
     const mods = new Set([...(inner.mods || []), mod]);
-    return { ...inner, label: MOD_SYM[mod] + inner.label, mods: [...mods], shift: inner.shift || mod === 'shift' };
+    return { ...inner, label: withMods(new Set([mod]), inner), mods: [...mods], shift: inner.shift || mod === 'shift' };
   }
   if (MODS[param]) {
     const m = MODS[param];
@@ -788,6 +846,7 @@ function onKeyDown(e) {
   if (e.target instanceof HTMLInputElement) return;
   e.preventDefault();
   if (e.repeat) return;
+  learnLayout(e);
   state.view = null;
   // F19/F20 из прошивки: клавиша слоя зажата — ведём себя как при её удержании
   const act0 = activeLayers();
@@ -903,8 +962,8 @@ function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;'
 function shortLabel(d) {
   if (!d) return '';
   switch (d.type) {
-    case 'kp': return d.tap.label;
-    case 'ht': return d.tap.label;
+    case 'kp': return dispLabel(d.tap);
+    case 'ht': return dispLabel(d.tap);
     case 'mo': return LAYER_NAMES[d.layer] ?? 'L' + d.layer;
     case 'tog': return 'tog ' + (LAYER_NAMES[d.layer] ?? d.layer);
     case 'to': return 'to ' + (LAYER_NAMES[d.layer] ?? d.layer);
@@ -982,7 +1041,8 @@ function render() {
     const d = r.d;
     const cls = ['key'];
     const main = el.querySelector('.main'), hold = el.querySelector('.hold'), mh = el.querySelector('.mh'), badge = el.querySelector('.badge');
-    const lbl = shortLabel(d);
+    let lbl = shortLabel(d);
+    if (mods.has('shift') && d?.tap && isLetterChar(lbl)) lbl = lbl.toUpperCase();
     main.innerHTML = esc(lbl) + (d?.tap?.sub ? `<span class="sub">${esc(d.tap.sub)}</span>` : '');
     main.className = 'main' + (lbl.length > 6 ? ' xlong' : lbl.length > 3 ? ' long' : '');
     if (!h && r.l !== top) cls.push('fall');
@@ -1011,9 +1071,9 @@ function render() {
     let mhText = '', mhTitle = '';
     if (mods.size && !h && !physPos.has(pos) && d?.tap?.code && !d.tap.mod) {
       const sc = SHORTCUTS[mk]?.[d.tap.code];
-      if (sc) { mhText = sc; mhTitle = `${modSyms(mods)}${d.tap.label} — ${sc}`; }
-      else if (mk === 'shift' && SHIFTED[d.tap.code] && !d.tap.shift) mhText = SHIFTED[d.tap.code];
-      else if (mk !== 'shift') mhText = modSyms(mods) + d.tap.label;
+      if (sc) { mhText = sc; mhTitle = `${withMods(mods, d.tap)} — ${sc}`; }
+      else if (mk === 'shift' && SHIFTED[d.tap.code] && !d.tap.shift && dispLabel(d.tap) === d.tap.label) mhText = SHIFTED[d.tap.code];
+      else if (mk !== 'shift') mhText = withMods(mods, d.tap);
     }
     mh.textContent = mhText;
     el.title = (mhTitle ? mhTitle + '\n' : '') + keyTitle(pos, d, r.l);
@@ -1073,9 +1133,12 @@ function renderStatus({ top, fired, consumed, mods, mk, physCombos }) {
   for (const i of physCombos) if (COMBOS[i].desc.tap) taps.push({ ...COMBOS[i].desc.tap, combo: COMBOS[i] });
   if (taps.length || mods.size) {
     const t = taps[taps.length - 1];
-    let res = modSyms(mods) + (t ? t.label : ' …');
+    let res = !t ? modSyms(mods) + ' …'
+      : !mods.size ? dispLabel(t)
+      : mk === 'shift' && isLetterChar(dispLabel(t)) ? dispLabel(t).toUpperCase()
+      : withMods(mods, t);
     let means = '';
-    if (t && mods.size) means = SHORTCUTS[mk]?.[t.code] || (mk === 'shift' && SHIFTED[t.code]) || '';
+    if (t && mods.size) means = SHORTCUTS[mk]?.[t.code] || (mk === 'shift' && dispLabel(t) === t.label && SHIFTED[t.code]) || '';
     const comboNote = t?.combo ? `<span class="chip combo">комбо ${t.combo.positions.join('+')}</span>` : '';
     parts.push(`<span class="lbl">Результат</span>${comboNote}<span class="result">${esc(res)}${means ? ` <span class="means">— ${esc(means)}</span>` : ''}</span>`);
   }
@@ -1111,10 +1174,10 @@ function renderNext({ act, top, comboHint, mods, mk }) {
     const rows = [];
     for (let pos = 0; pos < GEO.length; pos++) {
       const d = resolve(pos, act).d;
-      if (d?.tap?.code && sc[d.tap.code] && !rows.some(r => r.code === d.tap.code)) rows.push({ code: d.tap.code, l: d.tap.label, m: sc[d.tap.code] });
+      if (d?.tap?.code && sc[d.tap.code] && !rows.some(r => r.code === d.tap.code)) rows.push({ code: d.tap.code, l: withMods(mods, d.tap), m: sc[d.tap.code] });
     }
     if (mk === 'shift') items.push('<li><span class="k" style="color:var(--mod)">⇧</span><span>на клавишах показан символ с Shift</span></li>');
-    rows.slice(0, 18).forEach(r => items.push(`<li><span class="k" style="color:var(--mod)">${esc(modSyms(mods) + r.l)}</span><span>${esc(r.m)}</span></li>`));
+    rows.slice(0, 18).forEach(r => items.push(`<li><span class="k" style="color:var(--mod)">${esc(r.l)}</span><span>${esc(r.m)}</span></li>`));
     if (!rows.length && mk !== 'shift') items.push(`<li><span class="k" style="color:var(--mod)">${esc(modSyms(mods))}</span><span>на клавишах показано сочетание</span></li>`);
   }
   if (!state.latched.size && !state.phys.size && state.view == null) {
@@ -1130,6 +1193,14 @@ window.addEventListener('keyup', onKeyUp);
 window.addEventListener('blur', () => { state.phys.clear(); dropPhysLatches(); state.inferredLayer = null; render(); });
 document.getElementById('clear').onclick = () => { state.latched.clear(); state.physLatch.clear(); state.toggled.clear(); state.phys.clear(); state.inferredLayer = null; state.view = null; render(); };
 document.getElementById('showPills').onchange = render;
+document.getElementById('layout').onclick = () => {
+  LAYOUT.manual = true;
+  LAYOUT.seen = null;
+  setLayout(layoutName(LAYOUT.map) === 'RU' ? { ...US } : { ...RU });
+};
+window.addEventListener('focus', refreshLayout);
+setInterval(() => { if (document.visibilityState === 'visible') refreshLayout(); }, 2000);
+refreshLayout();
 const fileInput = document.getElementById('file');
 document.getElementById('load').onclick = () => fileInput.click();
 fileInput.onchange = async () => { const f = fileInput.files[0]; if (f) loadKeymap(await f.text(), f.name); };
