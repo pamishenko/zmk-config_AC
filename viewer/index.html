@@ -23,7 +23,7 @@
   --layer-bg: #efe8fd;
   --mod: #1f8a5b;
   --phys: #0f9fb3;
-  --l0: #8a8880; --l1: #149c8c; --l2: #2f6fe4; --l3: #e0602a; --l4: #c03a8a; --l5: #6b8e23;
+  --l0: #8a8880; --l1: #149c8c; --l2: #2f6fe4; --l3: #e0602a; --l4: #c03a8a; --l5: #6b8e23; --l6: #b08a00;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -31,7 +31,7 @@
     --border: #34343a; --key: #2a2a30; --key-border: #3c3c44; --key-shadow: 0 2px 0 #111114;
     --held: #4d8bff; --combo: #f0a830; --combo-bg: #3a2d10; --layer: #a07cf0; --layer-bg: #2c2340;
     --mod: #3fbf86; --phys: #2ec4d8;
-    --l0: #9a9890; --l1: #2ec4b0; --l2: #4d8bff; --l3: #ff7d45; --l4: #e05aa8; --l5: #9cc24a;
+    --l0: #9a9890; --l1: #2ec4b0; --l2: #4d8bff; --l3: #ff7d45; --l4: #e05aa8; --l5: #9cc24a; --l6: #e0b830;
   }
 }
 :root[data-theme="dark"] {
@@ -39,7 +39,7 @@
   --border: #34343a; --key: #2a2a30; --key-border: #3c3c44; --key-shadow: 0 2px 0 #111114;
   --held: #4d8bff; --combo: #f0a830; --combo-bg: #3a2d10; --layer: #a07cf0; --layer-bg: #2c2340;
   --mod: #3fbf86; --phys: #2ec4d8;
-  --l0: #9a9890; --l1: #2ec4b0; --l2: #4d8bff; --l3: #ff7d45; --l4: #e05aa8; --l5: #9cc24a;
+  --l0: #9a9890; --l1: #2ec4b0; --l2: #4d8bff; --l3: #ff7d45; --l4: #e05aa8; --l5: #9cc24a; --l6: #e0b830;
 }
 * { box-sizing: border-box; }
 body {
@@ -202,9 +202,11 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
 
 #define DEF 0
 #define GAME 1
-#define LWR 2
-#define RSE 3
-#define ADJ 4
+#define WASD 2
+#define LWR 3
+#define RSE 4
+#define ADJ 5
+#define OPT 6
 
 &lt { quick_tap_ms = <200>; };
 &mt { quick_tap_ms = <200>; };
@@ -254,6 +256,23 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
                 ;
         };
 
+        // Thumb Opt: holds LALT and, while held, the OPT layer (there V toggles WASD)
+        mo_alt: mo_alt {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
+            wait-ms = <0>;
+            tap-ms = <0>;
+            bindings
+                = <&macro_param_1to1>
+                , <&macro_press &mo MACRO_PLACEHOLDER>
+                , <&macro_press &kp LALT>
+                , <&macro_pause_for_release>
+                , <&macro_release &kp LALT>
+                , <&macro_param_1to1>
+                , <&macro_release &mo MACRO_PLACEHOLDER>
+                ;
+        };
+
         // Same as &lt (tap-preferred, 200 ms), but the hold side is &mo_f20
         lt_f20: layer_tap_f20 {
             compatible = "zmk,behavior-hold-tap";
@@ -270,27 +289,32 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
         compatible = "zmk,combos";
         combo_F2 {
             timeout-ms = <50>;
+            layers = <DEF GAME LWR RSE ADJ>;
             key-positions = <0 1>;
             bindings = <&kp F2>;
         };
         combo_ENTER {
             timeout-ms = <50>;
+            layers = <DEF GAME LWR RSE ADJ>;
             key-positions = <3 4>;
             bindings = <&kp ENTER>;
         };
          combo_BS {
             timeout-ms = <50>;
+            layers = <DEF GAME LWR RSE ADJ>;
             key-positions = <4 5>;
             bindings = <&kp BSPC>;
         };
         combo_Del {
             timeout-ms = <50>;
+            layers = <DEF GAME LWR RSE ADJ>;
             key-positions = <28 29>;
             bindings = <&kp DEL>;
         };
         // Ctrl + Z + X + C → Cmd+Shift+4 (macOS area screenshot)
         combo_SCREENSHOT {
             timeout-ms = <80>;
+            layers = <DEF GAME LWR RSE ADJ>;
             key-positions = <24 25 26 27>;
             bindings = <&kp LG(LS(N4))>;
         };
@@ -316,7 +340,7 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
      &kp ESC    &kp Q       &kp W       &kp E        &kp R        &kp T          &kp Y      &kp U        &kp I        &kp O       &kp P          &kp LBKT
      &kp LSHFT  &hm LGUI A  &hm LALT S  &hm LCTRL D  &hm LSHFT F  &kp G          &kp H      &hm LSHFT J  &hm LCTRL K  &hm LALT L  &hm LGUI SEMI  &kp SQT
      &kp LCTRL  &kp Z       &kp X       &kp C        &kp V        &kp B          &kp N      &kp M        &kp COMMA    &kp DOT     &kp FSLH       &kp RBKT
-                            &kp LALT    &mo_f19 LWR  &lt_f20 RSE SPACE               &kp ENTER  &kp BSPC     &kp LWIN
+                            &mo_alt OPT &mo_f19 LWR  &lt_f20 RSE SPACE               &kp ENTER  &kp BSPC     &kp LWIN
                         >;
                 };
 
@@ -335,10 +359,27 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
      &kp ESC  &kp T      &kp Q     &kp W    &kp E   &kp R          &kp Y      &kp U     &kp I      &kp O    &kp P     &kp LBKT
      &kp G    &kp LSHFT  &kp A     &kp S    &kp D   &kp F          &kp H      &kp J     &kp K      &kp L    &kp SEMI  &kp SQT
      &kp Z    &kp LCTRL  &kp H     &kp C    &kp V   &kp B          &kp N      &kp M     &kp COMMA  &kp DOT  &kp FSLH  &kp RBKT
-                         &kp LALT  &mo_f19 LWR  &kp SPACE              &kp ENTER  &kp BSPC  &kp LWIN
+                         &mo_alt OPT  &mo_f19 LWR  &kp SPACE              &kp ENTER  &kp BSPC  &kp LWIN
                         >;
                 };
 
+
+                wasd_layer {
+// Opt+V toggles this layer: left-hand-only games.
+// .-------------------------------------------------------.
+// |       |         |   UP   |        |         |    M    |
+// |-------+---------+--------+--------+---------+---------|
+// |       |  LEFT   |  DOWN  | RIGHT  |         |  SPACE  |
+// |-------+---------+--------+--------+---------+---------|
+// |       |         |        |        |         |         |
+// '--------------------------+--------+---------+---------+
+                        bindings = <
+     &trans  &trans     &kp UP     &trans     &trans  &kp M            &trans  &trans  &trans  &trans  &trans  &trans
+     &trans  &kp LEFT   &kp DOWN   &kp RIGHT  &trans  &kp SPACE        &trans  &trans  &trans  &trans  &trans  &trans
+     &trans  &trans     &trans     &trans     &trans  &trans           &trans  &trans  &trans  &trans  &trans  &trans
+                                   &trans     &trans  &trans           &trans  &trans  &trans
+                        >;
+                };
 
 
                 lower_layer {
@@ -396,6 +437,16 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
    &sys_reset      &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3    &bt BT_SEL 4      &bt BT_SEL 4  &bt BT_SEL 3  &bt BT_SEL 2  &bt BT_SEL 1  &bt BT_SEL 0  &trans
    &bt BT_CLR  &trans        &trans        &trans        &trans          &trans            &trans        &trans        &trans        &trans        &trans        &bt BT_CLR
                              &trans        &trans        &trans                            &trans        &trans        &trans
+                        >;
+                };
+
+                opt_layer {
+// Active while thumb Opt is held. Everything falls through except V = toggle WASD.
+                        bindings = <
+     &trans  &trans  &trans  &trans  &trans    &trans          &trans  &trans  &trans  &trans  &trans  &trans
+     &trans  &trans  &trans  &trans  &trans    &trans          &trans  &trans  &trans  &trans  &trans  &trans
+     &trans  &trans  &trans  &trans  &tog WASD &trans          &trans  &trans  &trans  &trans  &trans  &trans
+                             &trans  &trans    &trans          &trans  &trans  &trans
                         >;
                 };
          };
@@ -670,7 +721,8 @@ function describe(b) {
   }
   const mac = MACROS[b.beh];
   if (mac) {
-    if (mac.layer != null) return { type: 'mo', layer: mac.layer === 'param' ? layerIdx(p[0]) : mac.layer, signal: mac.signal };
+    if (mac.layer != null)
+      return { type: 'mo', layer: mac.layer === 'param' ? layerIdx(p[0]) : mac.layer, signal: mac.signal, key: mac.key };
     return { type: 'misc', label: b.beh, info: 'Макрос ' + b.beh };
   }
   const ht = HOLDTAPS[b.beh];
@@ -700,9 +752,11 @@ function loadKeymap(text, sourceLabel) {
     const bs = parseBindings(n.props.bindings || '', defines);
     const mo = bs.find(x => x.beh === 'mo');
     const kp = bs.find(x => x.beh === 'kp');
+    const key = kp ? keyInfo(kp.params[0]) : null;
     MACROS[n.label] = {
       layer: mo ? (mo.params[0] === 'MACRO_PLACEHOLDER' ? 'param' : layerIdx(mo.params[0])) : null,
-      signal: kp ? keyInfo(kp.params[0]).code : null,
+      signal: key?.code || null,
+      key: key?.mod ? key : null, // макрос «модификатор + слой», например ⌥ Opt + OPT
     };
   });
 
@@ -768,7 +822,7 @@ THUMBS.forEach(t => GEO.push(t));
 [...THUMBS].reverse().forEach(t => GEO.push({ x: 13.5 - t.x, y: t.y, rot: -t.rot }));
 const center = p => ({ x: GEO[p].x + 0.5, y: GEO[p].y + 0.5 });
 
-const layerColor = i => `var(--l${i % 6})`;
+const layerColor = i => `var(--l${i % 7})`;
 
 /* ---------- State ---------- */
 const state = { latched: new Map(), toggled: new Set(), phys: new Map(), physIgnore: new Set(), physLatch: new Map(), inferredLayer: null, view: null };
@@ -813,6 +867,7 @@ function clickKey(pos) {
 function latchPos(pos, l, d, phys) {
   const h = { pos, l, d, holdLayer: null, mod: null, phys };
   if (d.type === 'mo' || d.type === 'sl') h.holdLayer = d.layer;
+  if (d.type === 'mo' && d.key) h.mod = d.key.mod;
   if (d.type === 'ht') { if (d.hold.layer != null) h.holdLayer = d.hold.layer; else h.mod = d.hold.mod; }
   if (d.type === 'kp' && d.tap.mod) h.mod = d.tap.mod;
   state.latched.set(pos, h);
@@ -906,7 +961,8 @@ function onKeyUp(e) {
   if (!state.phys.size) state.inferredLayer = null;
   render();
 }
-function comboActive(c, act) { return !c.layers || c.layers.some(l => act.has(l)); }
+// ZMK проверяет только верхний активный слой
+function comboActive(c, act) { return !c.layers || c.layers.includes(Math.max(...act)); }
 
 /* ---------- Board DOM ---------- */
 let KEY_ELS = [], PILL_ELS = [];
@@ -973,7 +1029,7 @@ function shortLabel(d) {
   switch (d.type) {
     case 'kp': return dispLabel(d.tap);
     case 'ht': return dispLabel(d.tap);
-    case 'mo': return LAYER_NAMES[d.layer] ?? 'L' + d.layer;
+    case 'mo': return d.key ? d.key.label : LAYER_NAMES[d.layer] ?? 'L' + d.layer;
     case 'tog': return 'tog ' + (LAYER_NAMES[d.layer] ?? d.layer);
     case 'to': return 'to ' + (LAYER_NAMES[d.layer] ?? d.layer);
     case 'sl': return 'one-shot ' + (LAYER_NAMES[d.layer] ?? d.layer);
@@ -1062,7 +1118,7 @@ function render() {
     if (d?.type === 'ht') {
       hold.textContent = holdLabel(d);
       if (d.hold.layer != null) hold.classList.add('lay');
-    } else if (d?.type === 'mo') { hold.textContent = 'держать'; hold.classList.add('lay'); }
+    } else if (d?.type === 'mo') { hold.textContent = d.key ? '+ ' + LAYER_NAMES[d.layer] : 'держать'; hold.classList.add('lay'); }
     else if (d?.type === 'tog') { hold.textContent = state.toggled.has(d.layer) ? 'вкл ●' : 'переключ.'; hold.classList.add('lay'); }
     else hold.textContent = '';
     el.style.setProperty('--hc', target != null ? layerColor(target) : 'var(--layer)');
@@ -1092,6 +1148,7 @@ function render() {
   PILL_ELS.forEach((el, i) => {
     el.textContent = shortLabel(COMBOS[i].desc);
     el.className = 'pill' + (pillState[i] ? ' ' + pillState[i] : '');
+    el.style.display = comboActive(COMBOS[i], act) || pillState[i] ? '' : 'none';
   });
   document.getElementById('kbd').classList.toggle('nopills', !document.getElementById('showPills').checked);
 
