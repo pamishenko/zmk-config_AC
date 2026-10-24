@@ -288,6 +288,12 @@ kbd { font: 12px ui-monospace, Menlo, monospace; background: var(--surface-2); b
             key-positions = <28 29>;
             bindings = <&kp DEL>;
         };
+        // Ctrl + Z + X + C → Cmd+Shift+4 (macOS area screenshot)
+        combo_SCREENSHOT {
+            timeout-ms = <80>;
+            key-positions = <24 25 26 27>;
+            bindings = <&kp LG(LS(N4))>;
+        };
     };
 };
 
@@ -506,6 +512,8 @@ async function learnLayout(e) {
   if (LAYOUT.map?.[e.code] === ch) return;
   setLayout(isCyr(ch) ? { ...RU } : { ...US });
 }
+// что делает клавиша со встроенными модификаторами, например LG(LS(N4)) → «Скриншот области»
+const builtinMeaning = t => (t?.mods?.length && SHORTCUTS[modKey(new Set(t.mods))]?.[t.code]) || '';
 // подпись клавиши в текущей раскладке (только обычные символы без Shift)
 function dispLabel(t) {
   if (!t) return '';
@@ -619,7 +627,8 @@ function keyInfo(param) {
     const inner = keyInfo(wrap[3]);
     const mod = { S: 'shift', C: 'ctrl', A: 'alt', G: 'gui' }[wrap[2]];
     const mods = new Set([...(inner.mods || []), mod]);
-    return { ...inner, label: withMods(new Set([mod]), inner), mods: [...mods], shift: inner.shift || mod === 'shift' };
+    const base = inner.base || inner;
+    return { ...inner, base, label: withMods(mods, base), mods: [...mods], shift: inner.shift || mod === 'shift' };
   }
   if (MODS[param]) {
     const m = MODS[param];
@@ -948,7 +957,7 @@ function buildComboTable() {
   const base = LAYERS[0]?.desc || [];
   t.innerHTML = '<tr><th>Клавиши (база)</th><th>Позиции</th><th>Результат</th><th>Окно</th></tr>' + COMBOS.map((c, i) =>
     `<tr class="clickable" data-i="${i}"><td>${c.positions.map(p => esc(shortLabel(base[p]))).join(' + ')}</td>` +
-    `<td>${c.positions.join(', ')}</td><td><b>${esc(shortLabel(c.desc))}</b>${c.layers ? ` <span class="src">(слои ${c.layers.map(l => LAYER_NAMES[l]).join(', ')})</span>` : ''}</td>` +
+    `<td>${c.positions.join(', ')}</td><td><b>${esc(shortLabel(c.desc))}</b>${builtinMeaning(c.desc.tap) ? ` <span class="src">${esc(builtinMeaning(c.desc.tap))}</span>` : ''}${c.layers ? ` <span class="src">(слои ${c.layers.map(l => LAYER_NAMES[l]).join(', ')})</span>` : ''}</td>` +
     `<td>${c.timeout} мс</td></tr>`).join('');
   t.querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => {
     const c = COMBOS[+tr.dataset.i];
@@ -1139,6 +1148,7 @@ function renderStatus({ top, fired, consumed, mods, mk, physCombos }) {
       : withMods(mods, t);
     let means = '';
     if (t && mods.size) means = SHORTCUTS[mk]?.[t.code] || (mk === 'shift' && dispLabel(t) === t.label && SHIFTED[t.code]) || '';
+    else if (t) means = builtinMeaning(t);
     const comboNote = t?.combo ? `<span class="chip combo">комбо ${t.combo.positions.join('+')}</span>` : '';
     parts.push(`<span class="lbl">Результат</span>${comboNote}<span class="result">${esc(res)}${means ? ` <span class="means">— ${esc(means)}</span>` : ''}</span>`);
   }
@@ -1155,7 +1165,7 @@ function renderNext({ act, top, comboHint, mods, mk }) {
     if (!comboActive(c, act)) return;
     const missing = c.positions.filter(p => !state.latched.has(p));
     if (missing.length && missing.length < c.positions.length)
-      items.push(`<li><span class="k" style="color:var(--combo)">+ ${esc(missing.map(label).join(' + '))}</span><span>комбо → <b>${esc(shortLabel(c.desc))}</b></span></li>`);
+      items.push(`<li><span class="k" style="color:var(--combo)">+ ${esc(missing.map(label).join(' + '))}</span><span>комбо → <b>${esc(shortLabel(c.desc))}</b>${builtinMeaning(c.desc.tap) ? ' — ' + esc(builtinMeaning(c.desc.tap)) : ''}</span></li>`);
   });
   // слои
   const seen = new Set();

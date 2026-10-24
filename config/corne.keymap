@@ -97,6 +97,12 @@
             key-positions = <28 29>;
             bindings = <&kp DEL>;
         };
+        // Ctrl + Z + X + C → Cmd+Shift+4 (macOS area screenshot)
+        combo_SCREENSHOT {
+            timeout-ms = <80>;
+            key-positions = <24 25 26 27>;
+            bindings = <&kp LG(LS(N4))>;
+        };
     };
 };
 
