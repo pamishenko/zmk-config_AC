@@ -32,8 +32,9 @@
             bindings = <&kp>, <&kp>;
         };
 
-        // Momentary layer that also holds F19 / F20 while the key is down,
+        // Momentary layer that also holds F19 / F18 while the key is down,
         // so the web viewer (viewer/index.html) can see which thumb layer key is held.
+        // Not F20: on Linux xkb maps it to XF86AudioMicMute, which the desktop grabs.
         mo_f19: mo_f19 {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -49,7 +50,7 @@
                 , <&macro_release &mo MACRO_PLACEHOLDER>
                 ;
         };
-        mo_f20: mo_f20 {
+        mo_f18: mo_f18 {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
             wait-ms = <0>;
@@ -57,9 +58,9 @@
             bindings
                 = <&macro_param_1to1>
                 , <&macro_press &mo MACRO_PLACEHOLDER>
-                , <&macro_press &kp F20>
+                , <&macro_press &kp F18>
                 , <&macro_pause_for_release>
-                , <&macro_release &kp F20>
+                , <&macro_release &kp F18>
                 , <&macro_param_1to1>
                 , <&macro_release &mo MACRO_PLACEHOLDER>
                 ;
@@ -82,13 +83,13 @@
                 ;
         };
 
-        // Same as &lt (tap-preferred, 200 ms), but the hold side is &mo_f20
-        lt_f20: layer_tap_f20 {
+        // Same as &lt (tap-preferred, 200 ms), but the hold side is &mo_f18
+        lt_f18: layer_tap_f18 {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             tapping-term-ms = <200>;
             flavor = "tap-preferred";
-            bindings = <&mo_f20>, <&kp>;
+            bindings = <&mo_f18>, <&kp>;
         };
     };
 };
@@ -149,7 +150,7 @@
      &kp ESC    &kp Q       &kp W       &kp E        &kp R        &kp T          &kp Y      &kp U        &kp I        &kp O       &kp P          &kp LBKT
      &kp LSHFT  &hm LGUI A  &hm LALT S  &hm LCTRL D  &hm LSHFT F  &kp G          &kp H      &hm LSHFT J  &hm LCTRL K  &hm LALT L  &hm LGUI SEMI  &kp SQT
      &kp LCTRL  &kp Z       &kp X       &kp C        &kp V        &kp B          &kp N      &kp M        &kp COMMA    &kp DOT     &kp FSLH       &kp RBKT
-                            &mo_alt OPT &mo_f19 LWR  &lt_f20 RSE SPACE               &kp ENTER  &kp BSPC     &kp LWIN
+                            &mo_alt OPT &mo_f19 LWR  &lt_f18 RSE SPACE               &kp ENTER  &kp BSPC     &kp LWIN
                         >;
                 };
 
@@ -206,7 +207,7 @@
    &kp TAB     &kp EXCLAMATION   &kp AT            &kp HASH     &kp DOLLAR  &kp PERCENT        &kp CARET   &kp AMPS     &kp STAR     &kp LPAR    &kp RPAR       &kp DEL
    &kp LSHFT   &kp GRAVE         &kp KP_MULTIPLY   &kp KP_PLUS  &trans      &kp KP_EQUAL       &kp LEFT    &kp DOWN     &kp UP       &kp RIGHT   &kp PG_UP      &kp PG_DN
    &kp LCTRL   &kp PIPE          &kp KP_DIVIDE     &kp MINUS    &trans      &kp INSERT         &kp HOME    &kp END      &kp COMMA    &kp PERIOD  &kp QUESTION   &kp BSLH
-                                                   &kp LALT     &trans      &lt_f20 ADJ ENTER      &kp ENTER   &kp RCTRL    &kp RSHIFT
+                                                   &kp LALT     &trans      &lt_f18 ADJ ENTER      &kp ENTER   &kp RCTRL    &kp RSHIFT
                         >;
                 };
 
